@@ -72,6 +72,15 @@ workinkorea-server/
 ```
 
 ## 데이터베이스 마이그레이션 (alembic 사용)
+
+env.py 파일에 모델 추가
+```bash
+# alembic/env.py
+
+# 모델 추가
+from app.auth.models import *
+```
+
 ```bash
 # 마이그레이션 생성
 uv run alembic revision --autogenerate -m "Creat your message"
