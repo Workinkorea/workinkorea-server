@@ -2,6 +2,7 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
 
+
 class Settings(BaseSettings):
 
     # 이메일 설정
@@ -15,7 +16,12 @@ class Settings(BaseSettings):
     USE_CREDENTIALS: Optional[bool] = True
     VALIDATE_CERTS: Optional[bool] = True
 
+    # 데이터베이스 설정
+    DATABASE_SYNC_URL: Optional[str] = None
+    DATABASE_ASYNC_URL: Optional[str] = None
+
     class Config:
         env_file = ".env"
+
 
 SETTINGS = Settings()
