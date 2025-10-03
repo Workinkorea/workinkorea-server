@@ -70,3 +70,30 @@ workinkorea-server/
 ├── README.md                     
 └── .gitignore                     
 ```
+
+## 데이터베이스 마이그레이션 (alembic 사용)
+
+env.py 파일에 모델 추가
+```bash
+# alembic/env.py
+
+# 모델 추가
+from app.auth.models import *
+```
+
+```bash
+# 마이그레이션 생성
+uv run alembic revision --autogenerate -m "Creat your message"
+
+# 마이그레이션 적용
+uv run alembic upgrade head
+
+# 마이그레이션 롤백
+uv run alembic downgrade -1
+
+# 또는 특정 마이그레이션 롤백
+uv run alembic history 
+
+uv run alembic downgrade <revision>
+
+```
