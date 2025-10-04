@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi import Request
 
-from app.core.config import SETTINGS
+from app.core.settings import SETTINGS
 from urllib.parse import urlencode
 import httpx
 
@@ -100,22 +100,22 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
         if not user:
             # user 생성
             user_info_data['social_site'] = 'google'
-            user = await create_user_by_social(user_info_data, db)
-            message = " Google register success"
-        else:
-            message = " Google login success"
+            user_obj = await create_user_by_social(user_info_data, db)
+
+            if not user_obj:
+                return JSONResponse(content={"message": "Failed to create user"}, status_code=500)
 
         # jwt token 생성
-
         access_token = await create_access_token(user.email)
         refresh_token = await create_refresh_token(user.email)
 
         # jwt refresh token db 저장
-        await create_refresh_token_to_db(refresh_token, user.id, db)
+        refresh_token_obj = await create_refresh_token_to_db(refresh_token, user.id, db)
+        if not refresh_token_obj:
+            return JSONResponse(content={"message": "Failed to create refresh token"}, status_code=500)
 
         # jwt token 쿠키에 저장
-        response = JSONResponse(
-            content={"message": message, "name": user.name})
+        response = RedirectResponse(url=SETTINGS.CLIENT_URL)
         response.set_cookie(
             key="access_token",
             value=access_token,
@@ -137,7 +137,7 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
         return {"error": str(e)}
 
 
-@router.post("/api/auth/logout")
+@router.delete("/logout")
 async def logout(request: Request, db: AsyncSession = Depends(get_async_db)):
     """
     logout delete refresh token from db and delete cookies
@@ -176,6 +176,9 @@ async def refresh(request: Request):
 
         # jwt token 생성
         access_token = await create_access_token(user_email)
+        if not access_token:
+            return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
+
         response = JSONResponse(content={"message": "Access token refreshed"})
 
         response.set_cookie(
