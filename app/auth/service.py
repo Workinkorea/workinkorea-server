@@ -52,7 +52,8 @@ async def get_user_by_email(email, db: AsyncSession):
     args:
         email: str
     """
-    user = await db.execute(select(User).where(User.email == email))
+    stmt = select(User).where(User.email == email)
+    user = await db.execute(stmt)
     return user.scalar_one_or_none()
 
 
@@ -63,10 +64,10 @@ async def create_user_by_social(data, db: AsyncSession):
         data: dict
     """
     stmt = insert(User).values(
-        email=data['email'], 
-        name=data['name'],
-        passport_certi=False,
-        social_site=data['social_site']
+            email=data['email'],
+            name=data['name'],
+            passport_certi=False,
+            social_site=data['social_site']
         ).returning(User)
     result = await db.execute(stmt)
     await db.commit()
@@ -106,10 +107,10 @@ async def create_refresh_token_to_db(refresh_token: str, user_id: int, db: Async
     create refresh token db
     """
     stmt = insert(RefreshToken).values(
-        token=refresh_token,
-        user_id=user_id,
-        expires_at=datetime.datetime.utcnow() +
-        datetime.timedelta(minutes=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES)
+            token=refresh_token,
+            user_id=user_id,
+            expires_at=datetime.datetime.utcnow() +
+            datetime.timedelta(minutes=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES)
         ).returning(RefreshToken)
     result = await db.execute(stmt)
     await db.commit()
