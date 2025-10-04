@@ -39,12 +39,12 @@ async def get_async_db():
 class Base(DeclarativeBase):
     created_at : Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
-        default=func.timezone('Asia/Seoul', func.now()),
+        default=datetime.now(),
         nullable=False
         )
 
     updated_at : Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
-        default=func.timezone('Asia/Seoul', func.now()),
+        default=datetime.now(),
         nullable=False
         )
