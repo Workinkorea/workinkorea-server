@@ -3,11 +3,11 @@ from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from fastapi import Response, Request
 from fastapi.responses import JSONResponse
 
-from app.core.config import SETTINGS
+from app.core.settings import SETTINGS
 from app.auth.models import *
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, insert
 
 from pathlib import Path
 import random
@@ -52,7 +52,8 @@ async def get_user_by_email(email, db: AsyncSession):
     args:
         email: str
     """
-    user = await db.execute(select(User).where(User.email == email))
+    stmt = select(User).where(User.email == email)
+    user = await db.execute(stmt)
     return user.scalar_one_or_none()
 
 
@@ -62,11 +63,15 @@ async def create_user_by_social(data, db: AsyncSession):
     args:
         data: dict
     """
-    user = User(email=data['email'], name=data['name'],
-                passport_certi=False, social_site=data['social_site'])
-    db.add(user)
+    stmt = insert(User).values(
+            email=data['email'],
+            name=data['name'],
+            passport_certi=False,
+            social_site=data['social_site']
+        ).returning(User)
+    result = await db.execute(stmt)
     await db.commit()
-    return user
+    return result.scalar_one_or_none()
 
 
 async def create_access_token(user_email: str) -> str:
@@ -101,25 +106,23 @@ async def create_refresh_token_to_db(refresh_token: str, user_id: int, db: Async
     """
     create refresh token db
     """
-    refresh_token_obj = RefreshToken(
-        token=refresh_token,
-        user_id=user_id,
-        expires_at=datetime.datetime.utcnow() +
-        datetime.timedelta(minutes=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES)
-    )
-    db.add(refresh_token_obj)
+    stmt = insert(RefreshToken).values(
+            token=refresh_token,
+            user_id=user_id,
+            expires_at=datetime.datetime.utcnow() +
+            datetime.timedelta(minutes=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES)
+        ).returning(RefreshToken)
+    result = await db.execute(stmt)
     await db.commit()
-    await db.refresh(refresh_token_obj)
-    return refresh_token_obj
+    return result.scalar_one_or_none()
 
 
 async def delete_refresh_token_from_db(refresh_token: str, db: AsyncSession):
     """
     delete refresh token from db
     """
-    result = await db.execute(
-        delete(RefreshToken).where(RefreshToken.token == refresh_token)
-    )
+    stmt = delete(RefreshToken).where(RefreshToken.token == refresh_token)
+    result = await db.execute(stmt)
     await db.commit()
     return result.rowcount > 0
 

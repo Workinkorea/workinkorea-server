@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi import Request
 
-from app.core.config import SETTINGS
+from app.core.settings import SETTINGS
 from urllib.parse import urlencode
 import httpx
 
@@ -96,26 +96,38 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
 
         # user 조회
         user = await get_user_by_email(user_info_data['email'], db)
+        status_massage_dict = {"status": "success"}
 
         if not user:
             # user 생성
             user_info_data['social_site'] = 'google'
             user = await create_user_by_social(user_info_data, db)
-            message = " Google register success"
-        else:
-            message = " Google login success"
-
+            status_massage_dict["status"] = "signup"
+            if not user:
+                status_massage = urlencode({"status": "error", "message": "Failed to create user"})
+                url = f"{SETTINGS.CLIENT_URL}?{status_massage}"
+                return RedirectResponse(url=url)
+        
         # jwt token 생성
-
         access_token = await create_access_token(user.email)
         refresh_token = await create_refresh_token(user.email)
 
+        # 회원가입 / 로그인 구분
+        if status_massage_dict["status"] == "signup":
+            status_massage_dict["name"] = user.name
+        else:
+            status_massage_dict["access_token"] = access_token
+
         # jwt refresh token db 저장
-        await create_refresh_token_to_db(refresh_token, user.id, db)
+        refresh_token_obj = await create_refresh_token_to_db(refresh_token, user.id, db)
+        if not refresh_token_obj:
+            status_massage = urlencode({"status": "error", "message": "Failed to create refresh token"})
+            url = f"{SETTINGS.CLIENT_URL}?{status_massage}"
+            return RedirectResponse(url=url)
 
         # jwt token 쿠키에 저장
-        response = JSONResponse(
-            content={"message": message, "name": user.name})
+        success_url = f"{SETTINGS.CLIENT_URL}?{urlencode(status_massage_dict)}"
+        response = RedirectResponse(url=success_url)
         response.set_cookie(
             key="access_token",
             value=access_token,
@@ -134,16 +146,17 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
         )
         return response
     except Exception as e:
-        return {"error": str(e)}
+        status_massage = urlencode({"status": "error", "message": str(e)})
+        url = f"{SETTINGS.CLIENT_URL}?{status_massage}"
+        return RedirectResponse(url=url)
 
 
-@router.post("/api/auth/logout")
+@router.delete("/logout")
 async def logout(request: Request, db: AsyncSession = Depends(get_async_db)):
     """
     logout delete refresh token from db and delete cookies
     """
     try:
-        
         result = await delete_refresh_token_from_db(request.cookies.get("refresh_token"), db)
         if not result:
             return JSONResponse(content={"message": "Refresh token not found"}, status_code=401)
@@ -176,6 +189,9 @@ async def refresh(request: Request):
 
         # jwt token 생성
         access_token = await create_access_token(user_email)
+        if not access_token:
+            return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
+
         response = JSONResponse(content={"message": "Access token refreshed"})
 
         response.set_cookie(
