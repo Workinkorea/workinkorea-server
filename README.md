@@ -24,23 +24,59 @@ git clone <repository-url>
 cd workinkorea-server
 ```
 
-### 2. 가상환경(선택)
+### 2. .env 파일 생성
+```bash
+# fronend url
+CLIENT_URL=yser_url
+
+# email
+MAIL_USERNAME=email_username
+MAIL_PASSWORD=email_password
+MAIL_FROM=email_from
+MAIL_PORT=email_port
+MAIL_SERVER=email_server
+MAIL_STARTTLS=False
+MAIL_SSL_TLS=True
+USE_CREDENTIALS=True
+VALIDATE_CERTS=True
+
+# db
+DATABASE_ASYNC_URL=postgresql+asyncpg://user:password@host:port/database_name
+DATABASE_SYNC_URL=postgresql://user:password@host:port/database_name
+
+# google 
+GOOGLE_CLIENT_ID=google_client_id
+GOOGLE_CLIENT_SECRET=google_client_secret
+GOOGLE_REDIRECT_URI=google_redirect_uri
+GOOGLE_AUTHORIZATION_URL=google_authorization_url
+GOOGLE_TOKEN_URL=google_token_url
+GOOGLE_USER_INFO_URL=google_user_info_url
+
+
+# JWT
+JWT_SECRET=jwt_secret
+JWT_ALGORITHM=jwt_algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES=access_token_expire_minutes
+REFRESH_TOKEN_EXPIRE_MINUTES=refresh_token_expire_minutes
+```
+
+### 3. 가상환경(선택)
 ```bash
 # uv를 통해 가상환경이 필요 없음.
 uv venv
 source .venv/bin/activate
 ```
 
-### 3. 의존성 설치
+### 4. 의존성 설치
 ```bash
 # 모든 의존성을 정확한 버전으로 설치
 uv sync
 ```
 
-### 4. 서버 시작
+### 5. 서버 시작
 ```bash
 # uvicorn으로 실행
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
 ## API 문서
@@ -73,7 +109,7 @@ workinkorea-server/
 
 ## 데이터베이스 마이그레이션 (alembic 사용)
 
-env.py 파일에 모델 추가
+alembic/env.py 파일에 모델 추가
 ```bash
 # alembic/env.py
 
