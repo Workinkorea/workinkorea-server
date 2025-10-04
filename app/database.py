@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy import MetaData, DateTime, func, create_engine
 from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase, Mapped, mapped_column
 from datetime import datetime
-from app.core.config import SETTINGS
+from app.core.settings import SETTINGS
 
 meta = MetaData()
 async_engine = create_async_engine(SETTINGS.DATABASE_ASYNC_URL, echo=True, future=True)

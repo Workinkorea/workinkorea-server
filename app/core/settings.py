@@ -1,9 +1,11 @@
-# app/core/config.py
+# app/core/settings.py
 from pydantic_settings import BaseSettings
 from typing import Optional
 
 
 class Settings(BaseSettings):
+    # URL 설정
+    CLIENT_URL: Optional[str] = None
 
     # 이메일 설정
     MAIL_USERNAME: Optional[str] = None
