@@ -111,20 +111,12 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
         success_url = f"{SETTINGS.CLIENT_URL}/auth/callback?{urlencode(status_massage_dict)}"
         response = RedirectResponse(url=success_url)
         response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=True,  # 개발 환경에서는 secure=False
-            max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
-            samesite="none",
-        )
-        response.set_cookie(
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            secure=True,  # 개발 환경에서는 secure=False
+            secure=False,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
-            samesite="none",
+            samesite="lax",
         )
         return response
     except Exception as e:
@@ -180,9 +172,9 @@ async def refresh(request: Request):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=True,
+            secure=False,
             max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
-            samesite="none"
+            samesite="lax"
         )
         return response
     except Exception as e:
