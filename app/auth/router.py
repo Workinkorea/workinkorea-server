@@ -22,26 +22,6 @@ router = APIRouter(
 
 
 @router.get("/login/google")
-async def login_google():
-    """
-    google login
-    """
-    try:
-        params = {
-            "client_id": SETTINGS.GOOGLE_CLIENT_ID,
-            "redirect_uri": SETTINGS.GOOGLE_REDIRECT_URI,
-            "response_type": "code",
-            "scope": "email profile",
-            "access_type": "offline",
-            "prompt": "consent",
-        }
-        url = f"{SETTINGS.GOOGLE_AUTHORIZATION_URL}?{urlencode(params)}"
-        return {"url": url}
-    except Exception as e:
-        return {"error": str(e)}
-
-
-@router.get("/login/google/test")
 async def login_google_test():
     """
     google login test
@@ -128,7 +108,7 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
             return RedirectResponse(url=url)
 
         # jwt token 쿠키에 저장
-        success_url = f"{SETTINGS.CLIENT_URL}?{urlencode(status_massage_dict)}"
+        success_url = f"{SETTINGS.CLIENT_URL}/auth/callback?{urlencode(status_massage_dict)}"
         response = RedirectResponse(url=success_url)
         response.set_cookie(
             key="access_token",
