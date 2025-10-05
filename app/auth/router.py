@@ -104,10 +104,11 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
             user = await create_user_by_social(user_info_data, db)
             status_massage_dict["status"] = "signup"
             if not user:
-                status_massage = urlencode({"status": "error", "message": "Failed to create user"})
+                status_massage = urlencode(
+                    {"status": "error", "message": "Failed to create user"})
                 url = f"{SETTINGS.CLIENT_URL}?{status_massage}"
                 return RedirectResponse(url=url)
-        
+
         # jwt token 생성
         access_token = await create_access_token(user.email)
         refresh_token = await create_refresh_token(user.email)
@@ -121,28 +122,29 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
         # jwt refresh token db 저장
         refresh_token_obj = await create_refresh_token_to_db(refresh_token, user.id, db)
         if not refresh_token_obj:
-            status_massage = urlencode({"status": "error", "message": "Failed to create refresh token"})
+            status_massage = urlencode(
+                {"status": "error", "message": "Failed to create refresh token"})
             url = f"{SETTINGS.CLIENT_URL}/auth/callback?{status_massage}"
             return RedirectResponse(url=url)
 
         # jwt token 쿠키에 저장
-        success_url = f"{SETTINGS.CLIENT_URL}/auth/callback?{urlencode(status_massage_dict)}"
+        success_url = f"{SETTINGS.CLIENT_URL}?{urlencode(status_massage_dict)}"
         response = RedirectResponse(url=success_url)
         response.set_cookie(
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,
+            secure=True,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
-            samesite="lax"
+            samesite="none",
         )
         response.set_cookie(
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            secure=False,
+            secure=True,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
-            samesite="lax"
+            samesite="none",
         )
         return response
     except Exception as e:
@@ -160,7 +162,7 @@ async def logout(request: Request, db: AsyncSession = Depends(get_async_db)):
         result = await delete_refresh_token_from_db(request.cookies.get("refresh_token"), db)
         if not result:
             return JSONResponse(content={"message": "Refresh token not found"}, status_code=401)
-        
+
         response = JSONResponse(content={"message": "Logged out"})
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
@@ -198,9 +200,9 @@ async def refresh(request: Request):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,
+            secure=True,
             max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
-            samesite="lax"
+            samesite="none"
         )
         return response
     except Exception as e:
