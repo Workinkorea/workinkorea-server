@@ -5,6 +5,7 @@ pipeline {
         BRANCH_NAME = "dev"
         BASE_URL = "byeong98.xyz"
         DOCKER_IMAGE_NAME = "workinkorea-server"
+        PORT = 8000
         DISCORD_WEBHOOK_URL = credentials('discord-webhook-url')
     }
 
@@ -59,15 +60,15 @@ pipeline {
             steps {
                 echo "Health check..."
                 script {
-                    def success = false
-                    def response = sh """curl -s -o /dev/null -w "%{http_code}\n" https://arw.${env.BASE_URL}/docs"""
-
+                    def response = sh(
+                        script: """curl -s -o /dev/null -w "%{http_code}" https://arw.${env.BASE_URL}/docs""",
+                        returnStdout: true
+                    ).trim()
                     if (response == '200') {
                         echo "Health check passed"
-                        success = true
                     } else {
                         echo "Health check failed"
-                        success = false
+                        error("Health check failed")
                     }
                 }
                 echo "Health check finished"
