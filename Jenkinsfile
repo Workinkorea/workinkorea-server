@@ -45,7 +45,7 @@ pipeline {
                         --name workinkorea-server \
                         --network core_network \
                         --label 'traefik.enable=true' \
-                        --label 'traefik.http.routers.workinkorea-server.rule=Host("arw.${env.BASE_URL}")' \
+                        --label 'traefik.http.routers.workinkorea-server.rule=Host(\"arw.${env.BASE_URL}\")' \
                         --label 'traefik.http.routers.workinkorea-server.entrypoints=websecure' \
                         --label 'traefik.http.routers.workinkorea-server.tls.certresolver=le' \
                         --label 'traefik.http.services.workinkorea-server.loadbalancer.server.port=${env.PORT}' \
