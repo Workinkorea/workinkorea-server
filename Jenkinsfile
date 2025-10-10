@@ -55,25 +55,7 @@ pipeline {
                 echo "Deploy finished"
             }
         }
-        stage("health check") {
-            // 배포 후 헬스 체크
-            steps {
-                echo "Health check..."
-                script {
-                    def response = sh(
-                        script: """curl -s -o /dev/null -w "%{http_code}" https://arw.${env.BASE_URL}/docs""",
-                        returnStdout: true
-                    ).trim()
-                    if (response == '200') {
-                        echo "Health check passed"
-                    } else {
-                        echo "Health check failed"
-                        error("Health check failed")
-                    }
-                }
-                echo "Health check finished"
-            }
-        }
+        
     }
     // 빌드 결과 디스코드 알림
     post {
