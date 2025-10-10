@@ -79,19 +79,13 @@ pipeline {
         success {
             echo "Build passed"
             sh """
-            curl -X POST \
-            -H 'Content-Type: application/json' \
-            --data '{"content": "Build passed"}' \
-            ${env.DISCORD_WEBHOOK_URL}
+            curl -X POST -H 'Content-Type: application/json' --data '{"content": "Build passed"}' ${env.DISCORD_WEBHOOK_URL}
             """
         }
         failure {
             echo "Build failed"
             sh """
-            curl -X POST \
-            -H 'Content-Type: application/json' \
-            --data '{"content": "Build failed"}' \
-            ${env.DISCORD_WEBHOOK_URL}
+            curl -X POST -H 'Content-Type: application/json' --data '{"content": "Build failed"}' ${env.DISCORD_WEBHOOK_URL}
             """
         }
         always {
