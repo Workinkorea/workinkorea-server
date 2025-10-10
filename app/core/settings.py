@@ -5,6 +5,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # URL 설정
+    COOKIE_DOMAIN: Optional[str] = None
     CLIENT_URL: Optional[str] = None
 
     # 이메일 설정
