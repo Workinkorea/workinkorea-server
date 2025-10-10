@@ -6,7 +6,6 @@ pipeline {
         BASE_URL = "byeong98.xyz"
         DOCKER_IMAGE_NAME = "workinkorea-server"
         PORT = 8000
-        DISCORD_WEBHOOK_URL = credentials('discord-webhook-url')
 
         // 환경변수 .env 설정
         COOKIE_DOMAIN = credentials('cookie-domain')
@@ -89,33 +88,5 @@ pipeline {
             }
         }
         
-    }
-    // 빌드 결과 디스코드 알림
-    post {
-        success {
-            echo "Build passed"
-            script {
-                sh '''
-                curl -X POST \
-                  -H "Content-Type: application/json" \
-                  -d "{\\"content\\": \\"Build passed - WorkInKorea Server\\"}" \
-                  "${DISCORD_WEBHOOK_URL}"
-                '''
-            }
-        }
-        failure {
-            echo "Build failed"
-            script {
-                sh '''
-                curl -X POST \
-                  -H "Content-Type: application/json" \
-                  -d "{\\"content\\": \\"Build failed - WorkInKorea Server\\"}" \
-                  "${DISCORD_WEBHOOK_URL}"
-                '''
-            }
-        }
-        always {
-            echo "Discord notification finished"
-        }
     }
 }
