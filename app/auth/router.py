@@ -93,13 +93,11 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
         access_token = await create_access_token(user.email)
         refresh_token = await create_refresh_token(user.email)
 
-        # 회원가입 / 로그인 구분
-        if status_massage_dict["status"] == "signup":
-            status_massage_dict["name"] = user.name
-        else:
-            status_massage_dict["token"] = access_token
+        # 파라미터 user name, access token 저장
+        status_massage_dict["name"] = user.name
+        status_massage_dict["token"] = access_token
 
-        # jwt refresh token db 저장
+        # jwt refresh token db 저장 / 추후 redis 저장 예정
         refresh_token_obj = await create_refresh_token_to_db(refresh_token, user.id, db)
         if not refresh_token_obj:
             status_massage = urlencode(
@@ -117,6 +115,7 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
             secure=False,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
             samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
         )
         return response
     except Exception as e:
@@ -136,7 +135,7 @@ async def logout(request: Request, db: AsyncSession = Depends(get_async_db)):
             return JSONResponse(content={"message": "Refresh token not found"}, status_code=401)
 
         response = JSONResponse(content={"message": "Logged out"})
-        response.delete_cookie("access_token")
+
         response.delete_cookie("refresh_token")
         return response
     except Exception as e:
@@ -165,17 +164,7 @@ async def refresh(request: Request):
         access_token = await create_access_token(user_email)
         if not access_token:
             return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
-
-        response = JSONResponse(content={"message": "Access token refreshed"})
-
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=False,
-            max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
-            samesite="lax"
-        )
-        return response
+        
+        return JSONResponse(content={"access_token": access_token})
     except Exception as e:
         return {"error": str(e)}
