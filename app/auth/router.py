@@ -137,7 +137,7 @@ async def logout(request: Request, db: AsyncSession = Depends(get_async_db)):
         response = JSONResponse(content={"message": "Logged out"})
 
         response.delete_cookie(
-            "refresh_token",
+            key="refresh_token",
             domain=SETTINGS.COOKIE_DOMAIN
         )
         return response
