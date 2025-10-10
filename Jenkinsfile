@@ -79,7 +79,7 @@ pipeline {
         success {
             echo "Build passed"
             sh """
-            curl -X POST \ 
+            curl -X POST \
             -H 'Content-Type: application/json' \
             --data '{"content": "Build passed"}' \
             ${env.DISCORD_WEBHOOK_URL}
