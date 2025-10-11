@@ -29,7 +29,6 @@ pipeline {
     }
 
     stages {
-        
         stage("Docker build") {
             // 기존 docker 중지 및 삭제
             steps {
@@ -88,6 +87,5 @@ pipeline {
                 echo "Deploy finished"
             }
         }
-        
     }
 }
