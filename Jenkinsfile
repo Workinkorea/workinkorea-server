@@ -26,6 +26,8 @@ pipeline {
         JWT_ALGORITHM = credentials('jwt-algorithm')
         ACCESS_TOKEN_EXPIRE_MINUTES = credentials('access-token-expire-minutes')
         REFRESH_TOKEN_EXPIRE_MINUTES = credentials('refresh-token-expire-minutes')
+
+        // TRAEFIK_BASIC_AUTH_USERS = credentials('traefik-basic-auth-users')
     }
 
     stages {
@@ -34,6 +36,9 @@ pipeline {
             steps {
                 echo "Building.."
                 script{
+                    // clean up docker
+                    sh "docker system prune -a -f"
+                    
                     sh """
                     docker stop ${env.DOCKER_IMAGE_NAME} || true
                     docker rm ${env.DOCKER_IMAGE_NAME} || true
