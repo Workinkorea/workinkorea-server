@@ -66,8 +66,9 @@ async def create_user_by_social(data, db: AsyncSession):
     stmt = insert(User).values(
             email=data['email'],
             name=data['name'],
-            passport_certi=False,
-            social_site=data['social_site']
+            birth_date=data['birth_date'],
+            country_id=data['country_id'],
+            passport_certi=False
         ).returning(User)
     result = await db.execute(stmt)
     await db.commit()
@@ -149,3 +150,11 @@ async def get_current_user(request: Request):
         return JSONResponse(content={"message": "Access token expired"}, status_code=401)
     except Exception as e:
         return JSONResponse(content={"message": "Invalid token"}, status_code=401)
+
+async def get_country_code(country_code: str, db: AsyncSession):
+    """
+    get country code
+    """
+    stmt = select(Country).where(Country.code == country_code)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
