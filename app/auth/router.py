@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_db
 
 from app.auth.service import *
+from app.auth.schemas.request import *
 
 
 router = APIRouter(
@@ -79,15 +80,12 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
         status_massage_dict = {"status": "success"}
 
         if not user:
-            # user 생성
-            user_info_data['social_site'] = 'google'
-            user = await create_user_by_social(user_info_data, db)
-            status_massage_dict["status"] = "signup"
-            if not user:
-                status_massage = urlencode(
-                    {"status": "error", "message": "Failed to create user"})
-                url = f"{SETTINGS.CLIENT_URL}?{status_massage}"
-                return RedirectResponse(url=url)
+            # 회원가입 페이지로 이동
+            status_massage = urlencode({
+                "user_email": user_info_data['email']
+            })
+            url = f"{SETTINGS.CLIENT_URL}/signup/step2?{status_massage}"
+            return RedirectResponse(url=url)
 
         # jwt token 생성
         access_token = await create_access_token(user.email)
@@ -122,6 +120,36 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
         status_massage = urlencode({"status": "error", "message": str(e)})
         url = f"{SETTINGS.CLIENT_URL}/auth/callback?{status_massage}"
         return RedirectResponse(url=url)
+
+
+@router.post("/signup")
+async def signup(request: SignupRequest, db: AsyncSession = Depends(get_async_db)):
+    """
+    signup up
+    """
+    try:
+        user_info_data = request.model_dump()
+        # user 죄회
+        user = await get_user_by_email(user_info_data['email'], db)
+        if user:
+            # user 이미 존재하는 경우
+            return JSONResponse(content={"message": "user already exists"}, status_code=400)
+        
+        # country 조회
+        country = await get_country_code(user_info_data['country_code'], db)
+        if not country:
+            # country 조회 실패
+            return JSONResponse(content={"message": "country not found"}, status_code=400)
+
+        user_info_data['country_id'] = country.id
+        user = await create_user_by_social(user_info_data, db)
+        if not user:
+            # user 생성 실패
+            return JSONResponse(content={"message": "failed to create user"}, status_code=500)
+    
+        return RedirectResponse(url=f"{SETTINGS.CLIENT_URL}/login")
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
 @router.delete("/logout")
