@@ -6,7 +6,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.core.config import SETTINGS
+from app.core.settings import SETTINGS
 
 # 모델 추가
 from app.auth.models import *
