@@ -15,7 +15,7 @@ sync_session = sessionmaker(
     sync_engine, expire_on_commit=False, class_=Session)
 
 # 동기 세션(alembic 사용용)
-def get_sync_db():
+def get_sync_session() -> Session:
     with sync_session() as session:
         try:
             yield session
@@ -25,7 +25,7 @@ def get_sync_db():
             raise
 
 # 비동기 세션
-async def get_async_db():
+async def get_async_session() -> AsyncSession:
     async with async_session() as session:
         try:
             yield session

@@ -9,13 +9,13 @@ import httpx
 import re
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import get_async_db
+from app.database import get_async_session
 
-from app.auth.service import *
-from app.auth.repository import *
-from app.auth.schemas.request import *
-from app.users.repository import get_country_code
-
+from app.auth.service import AuthService
+from app.auth.schemas.request import SignupRequest
+from app.users.service import UsersService
+from app.users.models import User
+import jwt
 
 router = APIRouter(
     prefix="/api/auth",
@@ -23,6 +23,14 @@ router = APIRouter(
     # dependencies=[Depends(get_token_header)],
     # responses={404: {"description": "Not found"}}
 )
+
+
+def get_users_service(session: AsyncSession = Depends(get_async_session)):
+    return UsersService(session)
+
+
+def get_auth_service(session: AsyncSession = Depends(get_async_session)):
+    return AuthService(session)
 
 
 @router.get("/login/google")
@@ -46,7 +54,11 @@ async def login_google_test():
 
 
 @router.get("/login/google/callback")
-async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_db)):
+async def login_google_callback(
+    code: str,
+    users_service: UsersService = Depends(get_users_service),
+    auth_service: AuthService = Depends(get_auth_service),
+):
     """
     google login callback
     """
@@ -79,27 +91,27 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
             user_info_data = user_info_response.json()
 
         # user 조회
-        user = await get_user_by_email(user_info_data['email'], db)
-        status_massage_dict = {"status": "success"}
-
+        user: User | None = await users_service.get_user_by_email(user_info_data['email'])
         if not user:
-            # 회원가입 페이지로 이동
+            # user 조회 실패
             status_massage = urlencode({
                 "user_email": user_info_data['email']
             })
             url = f"{SETTINGS.CLIENT_URL}/signup?{status_massage}"
             return RedirectResponse(url=url)
 
+        status_massage_dict = {"status": "success", "user_email": user.email}
+
         # jwt token 생성
-        access_token = await create_access_token(user.email)
-        refresh_token = await create_refresh_token(user.email)
+        access_token = await auth_service.create_access_token(user.email)
+        refresh_token = await auth_service.create_refresh_token(user.email)
 
         # 파라미터 user name, access token 저장
-        status_massage_dict["name"] = user.name
+        status_massage_dict["name"] = user.profile.name
         status_massage_dict["token"] = access_token
 
         # jwt refresh token db 저장 / 추후 redis 저장 예정
-        refresh_token_obj = await create_refresh_token_to_db(refresh_token, user.id, db)
+        refresh_token_obj = await auth_service.create_refresh_token_to_db(refresh_token, user.id)
         if not refresh_token_obj:
             status_massage = urlencode(
                 {"status": "error", "message": "Failed to create refresh token"})
@@ -126,7 +138,7 @@ async def login_google_callback(code: str, db: AsyncSession = Depends(get_async_
 
 
 @router.post("/signup")
-async def signup(request: SignupRequest, db: AsyncSession = Depends(get_async_db)):
+async def signup(request: SignupRequest, users_service: UsersService = Depends(get_users_service), auth_service: AuthService = Depends(get_auth_service)):
     """
     signup up
     """
@@ -151,19 +163,19 @@ async def signup(request: SignupRequest, db: AsyncSession = Depends(get_async_db
             return JSONResponse(content={"error": "country_code is required"}, status_code=400)
 
         # user 조회
-        user = await get_user_by_email(user_info_data['email'], db)
+        user = await users_service.get_user_by_email(user_info_data['email'])
         if user:
             # user 이미 존재하는 경우
             return JSONResponse(content={"error": "user already exists"}, status_code=400)
         
         # country 조회
-        country = await get_country_code(user_info_data['country_code'], db)
+        country = await users_service.get_country_code(user_info_data['country_code'])
         if not country:
             # country 조회 실패
             return JSONResponse(content={"error": "country not found"}, status_code=400)
 
         user_info_data['country_id'] = country.id
-        user, profile = await create_user_by_social(user_info_data, db)
+        user, profile = await users_service.create_user_by_social(user_info_data)
         if not user or not profile:
             # user 생성 실패
             return JSONResponse(content={"error": "failed to create user"}, status_code=500)
@@ -174,12 +186,12 @@ async def signup(request: SignupRequest, db: AsyncSession = Depends(get_async_db
 
 
 @router.delete("/logout")
-async def logout(request: Request, db: AsyncSession = Depends(get_async_db)):
+async def logout(request: Request, auth_service: AuthService = Depends(get_auth_service)):
     """
     logout delete refresh token from db and delete cookies
     """
     try:
-        result = await delete_refresh_token_from_db(request.cookies.get("refresh_token"), db)
+        result = await auth_service.delete_refresh_token_from_db(request.cookies.get("refresh_token"))
         if not result:
             return JSONResponse(content={"message": "Refresh token not found"}, status_code=401)
 
@@ -195,7 +207,7 @@ async def logout(request: Request, db: AsyncSession = Depends(get_async_db)):
 
 
 @router.post("/refresh")
-async def refresh(request: Request):
+async def refresh(request: Request, auth_service: AuthService = Depends(get_auth_service)):
     """
     get new access token by refresh token
     """
@@ -213,10 +225,10 @@ async def refresh(request: Request):
             return JSONResponse(content={"message": "Invalid refresh token"}, status_code=401)
 
         # jwt token 생성
-        access_token = await create_access_token(user_email)
+        access_token = await auth_service.create_access_token(user_email)
         if not access_token:
             return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
         
         return JSONResponse(content={"access_token": access_token})
     except Exception as e:
-        return {"error": str(e)}
+        return JSONResponse(content={"error": str(e)}, status_code=500)
