@@ -10,6 +10,7 @@ from app.core.settings import SETTINGS
 
 # 모델 추가
 from app.auth.models import *
+from app.users.models import *
 
 # alembic 설정
 config = context.config
