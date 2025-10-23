@@ -1,21 +1,9 @@
 # app/auth/models.py
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, ForeignKey, Date, Boolean
+from sqlalchemy import Integer, String, ForeignKey, Date
 from app.database import Base
 import datetime
-
-from app.auth.models import RefreshToken
-
-
-class User(Base):
-    __tablename__ = "users"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    email: Mapped[str] = mapped_column(String, index=True, unique=True)
-    passport_certi: Mapped[bool] = mapped_column(Boolean, index=True)
-
-    refresh_tokens: Mapped[list["RefreshToken"]] = relationship("RefreshToken", back_populates="user")
-    profile: Mapped["Profile"] = relationship("Profile", back_populates="user")
-    contacts: Mapped["Contact"] = relationship("Contact", back_populates="user")
+from app.auth.models import User
 
 
 class Country(Base):

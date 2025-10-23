@@ -1,28 +1,12 @@
 from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.users.models import *
+from app.profile.models import *
+from app.auth.models import User
 
 
-class UsersRepository:
+class ProfileRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
-
-    async def create_user_by_social(self, data: dict) -> User | None:
-        """
-        create user
-        args:
-            data: dict
-        """
-        try:
-            stmt = insert(User).values(
-                email=data['email'],
-                passport_certi=False
-            ).returning(User)
-            result = await self.session.execute(stmt)
-            await self.session.commit()
-            return result.scalar_one_or_none()
-        except Exception as e:
-            raise e
  
     async def create_profile(self, user_data: dict) -> Profile:
         """
@@ -91,19 +75,6 @@ class UsersRepository:
         """
         try:
             stmt = select(Country).where(Country.code == country_code)
-            result = await self.session.execute(stmt)
-            return result.scalar_one_or_none()
-        except Exception as e:
-            raise e
-
-    async def get_user_by_email(self, email: str) -> User | None:
-        """
-        get user by email
-        args:
-            email: str
-        """
-        try:
-            stmt = select(User).where(User.email == email)
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
         except Exception as e:
