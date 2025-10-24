@@ -48,7 +48,7 @@ class AuthService:
         fm = FastMail(conf)
         await fm.send_message(message, template_name="email_code_temp.html")
 
-    async def create_access_token(user_email: str) -> str:
+    async def create_access_token(self, user_email: str) -> str:
         """
         create access token
         args:
@@ -66,7 +66,7 @@ class AuthService:
         except Exception as e:
             raise e
 
-    async def create_refresh_token(user_email: str) -> str:
+    async def create_refresh_token(self, user_email: str) -> str:
         """
         create refresh token
         args:
