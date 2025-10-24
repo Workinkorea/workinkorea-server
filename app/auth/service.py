@@ -11,8 +11,8 @@ import datetime
 import jwt
 
 from app.auth.repository import AuthRepository
-from app.profile.repository import ProfileRepository
-from app.profile.models import Profile
+from app.profile.repositories.profile import ProfileRepository
+from app.profile.models.profile import Profile
 from app.auth.models import User
 from fastapi import Request
 from fastapi.responses import JSONResponse

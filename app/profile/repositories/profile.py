@@ -1,7 +1,6 @@
 from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.profile.models import *
-from app.auth.models import User
+from app.profile.models.profile import Profile
 
 
 class ProfileRepository:
@@ -40,42 +39,31 @@ class ProfileRepository:
         except Exception as e:
             raise e
         
-    async def update_profile(self, profile_id: int, data: dict) -> bool:
+    async def update_profile(self, user_id: int, profile_data: dict) -> bool:
         """
         update profile
         args:
-            profile_id: int
-            data: dict
+            user_id: int
+            profile_data: dict
         """
         try:
-            stmt = update(Profile).values(data).where(Profile.id == profile_id)
-            self.session.execute(stmt)
+            stmt = update(Profile).values(profile_data).where(Profile.user_id == user_id)
+            result = await self.session.execute(stmt)
             await self.session.commit()
-            return True
+            return result.rowcount > 0
         except Exception as e:
             raise e
         
-    async def delete_profile(self, profile_id: int) -> bool:
+    async def delete_profile(self, user_id: int) -> bool:
         """
         delete profile
-        """
-        try:
-            stmt = delete(Profile).where(Profile.id == profile_id)
-            self.session.execute(stmt)
-            await self.session.commit()
-            return True
-        except Exception as e:
-            raise e
-
-    async def get_country_code(self, country_code: str) -> Country | None:
-        """
-        get country by code
         args:
-            country_code: str
+            user_id: int
         """
         try:
-            stmt = select(Country).where(Country.code == country_code)
+            stmt = delete(Profile).where(Profile.user_id == user_id)
             result = await self.session.execute(stmt)
-            return result.scalar_one_or_none()
+            await self.session.commit()
+            return result.rowcount > 0
         except Exception as e:
             raise e

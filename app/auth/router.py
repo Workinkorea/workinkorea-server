@@ -13,7 +13,7 @@ from app.database import get_async_session
 
 from app.auth.service import AuthService
 from app.auth.schemas.request import SignupRequest
-from app.profile.service import ProfileService
+from app.profile.services.profile import ProfileService
 from app.auth.models import User
 import jwt
 
