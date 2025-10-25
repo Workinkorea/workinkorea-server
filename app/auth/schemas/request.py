@@ -9,3 +9,6 @@ class SignupRequest(BaseModel):
     name: str
     birth_date: date
     country_code: str
+
+class EmailCertifyRequest(BaseModel):
+    email: str

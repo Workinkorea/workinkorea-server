@@ -53,9 +53,10 @@ class Base(DeclarativeBase):
 # redis 
 import redis.asyncio as redis
 
-async def redis_client() -> redis.Redis:
-    try:
-        return await redis.Redis(host=SETTINGS.REDIS_HOST, port=SETTINGS.REDIS_PORT, db=SETTINGS.REDIS_DB)
-    except Exception as e:
-        print(f"Redis connection error: {e}")
-        raise ConnectionError(f"Failed to connect to Redis: {e}")
+async def get_redis_client() -> redis.Redis:
+   async with redis.Redis(host=SETTINGS.REDIS_HOST, port=SETTINGS.REDIS_PORT, db=SETTINGS.REDIS_DB) as client:
+        try:
+            yield client
+        except Exception as e:
+            print(f"Redis connection error: {e}")
+            raise ConnectionError(f"Failed to connect to Redis: {e}")

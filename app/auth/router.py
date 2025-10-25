@@ -10,9 +10,12 @@ import re
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
+from app.database import get_redis_client
+import redis.asyncio as redis
 
+from app.auth.service import AuthRedisService
 from app.auth.service import AuthService
-from app.auth.schemas.request import SignupRequest
+from app.auth.schemas.request import *
 from app.profile.services.profile import ProfileService
 from app.auth.models import User
 import jwt
@@ -32,6 +35,8 @@ def get_profile_service(session: AsyncSession = Depends(get_async_session)):
 def get_auth_service(session: AsyncSession = Depends(get_async_session)):
     return AuthService(session)
 
+def get_auth_redis_service(redis_client: redis.Redis = Depends(get_redis_client)):
+    return AuthRedisService(redis_client)
 
 @router.get("/login/google")
 async def login_google():
@@ -236,17 +241,48 @@ async def refresh(request: Request, auth_service: AuthService = Depends(get_auth
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-@router.get("/redis/ping")
-async def redis_ping():
+@router.get("/email/certify")
+async def email_certification(request: EmailCertifyRequest,
+    auth_redis_service: AuthRedisService = Depends(get_auth_redis_service),
+    auth_service: AuthService = Depends(get_auth_service),
+):
     """
-    check redis ping
+    email certification
     """
-    from app.auth.repository import RedisRepository
-    redis_repository = RedisRepository()
     try:
-        result = await redis_repository.check_redis_ping()
-        if not result:
-            return JSONResponse(content={"message": "Redis is not running"}, status_code=500)
-        return JSONResponse(content={"message": "Redis is running"}, status_code=200)
+        email = request.model_dump().get("email")
+        if not email:
+            return JSONResponse(content={"message": "Email is required"}, status_code=400)
+
+        # 이메일 전송
+        code = await auth_service.send_email_verify_code(email)
+        if not code:
+            return JSONResponse(content={"message": "Failed to send email certification code"}, status_code=500)
+
+        # 이메일 코드 저장
+        set_redis = await auth_redis_service.set_email_certify_code(email, code)
+        if not set_redis:
+            return JSONResponse(content={"message": "Failed to set email certification code"}, status_code=500)
+
+        return JSONResponse(content={"message": "Send email certification code"}, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@router.post("/email/certify/verify")
+async def email_certify_verify(request: EmailCertifyRequest, auth_redis_service: AuthRedisService = Depends(get_auth_redis_service)):
+    """
+    email certification verify
+    """
+    try:
+        request = request.model_dump()
+        if not request['email']:
+            return JSONResponse(content={"message": "Email is required"}, status_code=400)
+
+        get_redis_code = await auth_redis_service.get_email_certify_code(request['email'], request['code'])
+        if not get_redis_code:
+            return JSONResponse(content={"message": "Email certification code is incorrect"}, status_code=400)
+        
+        return JSONResponse(content={"message": "Email certification code verified"}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)

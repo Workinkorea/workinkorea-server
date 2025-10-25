@@ -10,13 +10,15 @@ import random
 import datetime
 import jwt
 
+import redis.asyncio as redis
 from app.auth.repository import AuthRepository
+
 from app.profile.repositories.profile import ProfileRepository
 from app.profile.models.profile import Profile
 from app.auth.models import User
 from fastapi import Request
 from fastapi.responses import JSONResponse
-
+from app.auth.repository import AuthRedisRepository
 
 class AuthService:
     def __init__(self, session: AsyncSession):
@@ -24,11 +26,11 @@ class AuthService:
         self.auth_repository = AuthRepository(session)
         self.profile_repository = ProfileRepository(session)
 
-    async def send_email_verifi_code(self, email) -> bool:
+    async def send_email_verify_code(self, email: str):
         """ 
-        email verification code
+        email certification code 
         args:
-            email: EmailSchema
+            email: str
         """
         conf = ConnectionConfig(
             MAIL_USERNAME=SETTINGS.MAIL_USERNAME,
@@ -47,12 +49,13 @@ class AuthService:
 
         message = MessageSchema(
             subject="Work In Korea Verification Code",
-            recipients=email.dict().get("email"),
+            recipients=[email],
             template_body={"code": code},
             subtype=MessageType.html)
 
         fm = FastMail(conf)
         await fm.send_message(message, template_name="email_code_temp.html")
+        return code
 
     async def create_access_token(self, user_email: str) -> str:
         """
@@ -154,3 +157,35 @@ class AuthService:
             email: str
         """
         return await self.auth_repository.get_user_by_email(email)
+
+class AuthRedisService:
+    def __init__(self, redis_client: redis.Redis):
+        self.auth_redis_repository = AuthRedisRepository(redis_client)
+
+    async def set_email_certify_code(self, email: str, code: int):
+        """
+        set email certification code to redis
+        args:
+            email: str
+            code: int
+        """
+        return await self.auth_redis_repository.set_email_certify_code(email, code)
+    
+    async def get_email_certify_code(self, email: str, code: int):
+        """
+        get email certification code from redis
+        args:
+            email: str
+        """
+        get_redis_code = await self.auth_redis_repository.get_email_certify_code(email)
+        if not get_redis_code:
+            return JSONResponse(content={"message": "Email certification code not found"}, status_code=404)
+        
+        if get_redis_code != code:
+            return JSONResponse(content={"message": "Email certification code is incorrect"}, status_code=400)
+
+        delete_redis_code = await self.auth_redis_repository.delete_email_certify_code(email)
+        if not delete_redis_code:
+            return JSONResponse(content={"message": "Failed to delete email certification code"}, status_code=500)
+
+        return True

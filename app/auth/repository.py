@@ -1,10 +1,10 @@
 from sqlalchemy import select, delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 import datetime
-from app.auth.models import *
+from app.auth.models import RefreshToken, User
 from app.core.settings import SETTINGS
 
-from app.database import redis_client
+import redis.asyncio as redis
 
 
 class AuthRepository:
@@ -68,16 +68,35 @@ class AuthRepository:
         args:
             email: str
         """
+        from sqlalchemy.orm import selectinload
         try:
-            stmt = select(User).where(User.email == email)
+            stmt = select(User).options(selectinload(User.profile)).where(User.email == email)
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
         except Exception as e:
             raise e
 
-class RedisRepository:
-    def __init__(self):
-        self.redis = redis_client()
+class AuthRedisRepository:
+    def __init__(self,  redis_client: redis.Redis):
+        self.redis = redis_client
 
     async def check_redis_ping(self):
         return await self.redis.ping()
+
+    async def set_email_certify_code(self, email: str, code: int):
+        """
+        set email certification code to redis
+        """
+        return await self.redis.set(email, code, ex=60*3) # 3 minutes
+    
+    async def get_email_certify_code(self, email: str):
+        """
+        get email certification code from redis
+        """
+        return await self.redis.get(email)
+
+    async def delete_email_certify_code(self, email):
+        """
+        delete email certification code from redis
+        """
+        return await self.redis.delete(email)
