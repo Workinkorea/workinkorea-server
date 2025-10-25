@@ -15,6 +15,10 @@ pipeline {
         DATABASE_SYNC_URL = credentials('database-sync-url')
         DATABASE_ASYNC_URL = credentials('database-async-url')
 
+        REDIS_HOST = credentials('redis-host')
+        REDIS_PORT = credentials('redis-port')
+        REDIS_DB = credentials('redis-db')
+
         GOOGLE_CLIENT_ID = credentials('google-client-id')
         GOOGLE_CLIENT_SECRET = credentials('google-client-secret')
         GOOGLE_REDIRECT_URI = credentials('google-redirect-uri')
@@ -76,6 +80,9 @@ pipeline {
                         -e CLIENT_URL=${env.CLIENT_URL} \
                         -e DATABASE_SYNC_URL=${env.DATABASE_SYNC_URL} \
                         -e DATABASE_ASYNC_URL=${env.DATABASE_ASYNC_URL} \
+                        -e REDIS_HOST=${env.REDIS_HOST} \
+                        -e REDIS_PORT=${env.REDIS_PORT} \
+                        -e REDIS_DB=${env.REDIS_DB} \
                         -e GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID} \
                         -e GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET} \
                         -e GOOGLE_REDIRECT_URI=${env.GOOGLE_REDIRECT_URI} \
