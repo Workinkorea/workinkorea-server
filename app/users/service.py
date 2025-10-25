@@ -20,7 +20,7 @@ class UsersService:
         """
         return await self.users_repository.get_profile_by_user_id(user_id)
 
-    async def get_current_user(request: Request):
+    async def get_current_user(self, request: Request):
         """
         get current user
         """

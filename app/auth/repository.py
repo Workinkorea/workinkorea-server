@@ -4,6 +4,8 @@ import datetime
 from app.auth.models import *
 from app.core.settings import SETTINGS
 
+from app.database import redis_client
+
 
 class AuthRepository:
     def __init__(self, session: AsyncSession):
@@ -14,9 +16,9 @@ class AuthRepository:
         delete refresh token from db
         """
         try:
-            stmt = delete(RefreshToken).where(RefreshToken.token == refresh_token)
+            stmt = delete(RefreshToken).where(
+                RefreshToken.token == refresh_token)
             result = await self.session.execute(stmt)
-            await self.session.commit()
             return result.rowcount > 0
         except Exception as e:
             raise e
@@ -30,10 +32,11 @@ class AuthRepository:
                 token=refresh_token,
                 user_id=user_id,
                 expires_at=datetime.datetime.utcnow() +
-                datetime.timedelta(minutes=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES)
+                datetime.timedelta(
+                    minutes=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES)
             ).returning(RefreshToken)
             result = await self.session.execute(stmt)
-            await self.session.commit()
             return result.scalar_one_or_none()
         except Exception as e:
             raise e
+

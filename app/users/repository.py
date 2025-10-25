@@ -19,11 +19,10 @@ class UsersRepository:
                 passport_certi=False
             ).returning(User)
             result = await self.session.execute(stmt)
-            await self.session.commit()
             return result.scalar_one_or_none()
         except Exception as e:
             raise e
- 
+
     async def create_profile(self, user_data: dict) -> Profile:
         """
         create basic profile
@@ -38,7 +37,6 @@ class UsersRepository:
                 country_id=user_data['country_id'],
             ).returning(Profile)
             result = await self.session.execute(stmt)
-            await self.session.commit()
             return result.scalar_one()
         except Exception as e:
             raise e
@@ -55,7 +53,7 @@ class UsersRepository:
             return result.scalar_one_or_none()
         except Exception as e:
             raise e
-        
+
     async def update_profile(self, profile_id: int, data: dict) -> bool:
         """
         update profile
@@ -65,20 +63,18 @@ class UsersRepository:
         """
         try:
             stmt = update(Profile).values(data).where(Profile.id == profile_id)
-            self.session.execute(stmt)
-            await self.session.commit()
+            await self.session.execute(stmt)
             return True
         except Exception as e:
             raise e
-        
+
     async def delete_profile(self, profile_id: int) -> bool:
         """
         delete profile
         """
         try:
             stmt = delete(Profile).where(Profile.id == profile_id)
-            self.session.execute(stmt)
-            await self.session.commit()
+            await self.session.execute(stmt)
             return True
         except Exception as e:
             raise e
@@ -103,7 +99,9 @@ class UsersRepository:
             email: str
         """
         try:
-            stmt = select(User).where(User.email == email)
+            # selectinload: 즉시 로딩
+            from sqlalchemy.orm import selectinload 
+            stmt = select(User).options(selectinload(User.profile)).where(User.email == email)
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
         except Exception as e:
