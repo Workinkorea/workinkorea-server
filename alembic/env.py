@@ -10,7 +10,12 @@ from app.core.settings import SETTINGS
 
 # 모델 추가
 from app.auth.models import *
-from app.users.models import *
+from app.profile.models.profile import *
+from app.profile.models.contact import *
+from app.profile.models.position import *
+from app.profile.models.country import *
+from app.profile.models.account_config import *
+
 
 # alembic 설정
 config = context.config

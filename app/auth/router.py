@@ -16,7 +16,7 @@ import redis.asyncio as redis
 from app.auth.service import AuthRedisService
 from app.auth.service import AuthService
 from app.auth.schemas.request import *
-from app.profile.services.profile import ProfileService
+from app.profile.services.country import CountryService
 from app.auth.models import User
 import jwt
 
@@ -28,15 +28,17 @@ router = APIRouter(
 )
 
 
-def get_profile_service(session: AsyncSession = Depends(get_async_session)):
-    return ProfileService(session)
-
-
 def get_auth_service(session: AsyncSession = Depends(get_async_session)):
     return AuthService(session)
 
+
+def get_country_service(session: AsyncSession = Depends(get_async_session)):
+    return CountryService(session)
+
+
 def get_auth_redis_service(redis_client: redis.Redis = Depends(get_redis_client)):
     return AuthRedisService(redis_client)
+
 
 @router.get("/login/google")
 async def login_google():
@@ -144,7 +146,7 @@ async def login_google_callback(
 @router.post("/signup")
 async def signup(
     request: SignupRequest,
-    profile_service: ProfileService = Depends(get_profile_service),
+    country_service: CountryService = Depends(get_country_service),
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """
@@ -177,7 +179,7 @@ async def signup(
             return JSONResponse(content={"error": "user already exists"}, status_code=400)
         
         # country 조회
-        country = await profile_service.get_country_code(user_info_data['country_code'])
+        country = await country_service.get_country_by_country_code(user_info_data['country_code'])
         if not country:
             # country 조회 실패
             return JSONResponse(content={"error": "country not found"}, status_code=400)

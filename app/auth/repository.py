@@ -76,6 +76,7 @@ class AuthRepository:
         except Exception as e:
             raise e
 
+
 class AuthRedisRepository:
     def __init__(self,  redis_client: redis.Redis):
         self.redis = redis_client
