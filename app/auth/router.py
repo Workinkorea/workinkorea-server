@@ -13,8 +13,8 @@ from app.database import get_async_session
 
 from app.auth.service import AuthService
 from app.auth.schemas.request import SignupRequest
-from app.users.service import UsersService
-from app.users.models import User
+from app.profile.services.profile import ProfileService
+from app.auth.models import User
 import jwt
 
 router = APIRouter(
@@ -25,8 +25,8 @@ router = APIRouter(
 )
 
 
-def get_users_service(session: AsyncSession = Depends(get_async_session)):
-    return UsersService(session)
+def get_profile_service(session: AsyncSession = Depends(get_async_session)):
+    return ProfileService(session)
 
 
 def get_auth_service(session: AsyncSession = Depends(get_async_session)):
@@ -56,7 +56,6 @@ async def login_google():
 @router.get("/login/google/callback")
 async def login_google_callback(
     code: str,
-    users_service: UsersService = Depends(get_users_service),
     auth_service: AuthService = Depends(get_auth_service),
 ):
     """
@@ -90,7 +89,7 @@ async def login_google_callback(
             user_info_data = user_info_response.json()
 
         # user 조회
-        user = await users_service.get_user_by_email(user_info_data['email'])
+        user: User | None = await auth_service.get_user_by_email(user_info_data['email'])
         if not user:
             # user 조회 실패
             status_massage = urlencode({
@@ -138,7 +137,11 @@ async def login_google_callback(
 
 
 @router.post("/signup")
-async def signup(request: SignupRequest, users_service: UsersService = Depends(get_users_service), auth_service: AuthService = Depends(get_auth_service)):
+async def signup(
+    request: SignupRequest,
+    profile_service: ProfileService = Depends(get_profile_service),
+    auth_service: AuthService = Depends(get_auth_service)
+):
     """
     signup up
     """
@@ -163,19 +166,19 @@ async def signup(request: SignupRequest, users_service: UsersService = Depends(g
             return JSONResponse(content={"error": "country_code is required"}, status_code=400)
 
         # user 조회
-        user = await users_service.get_user_by_email(user_info_data['email'])
+        user = await auth_service.get_user_by_email(user_info_data['email'])
         if user:
             # user 이미 존재하는 경우
             return JSONResponse(content={"error": "user already exists"}, status_code=400)
         
         # country 조회
-        country = await users_service.get_country_code(user_info_data['country_code'])
+        country = await profile_service.get_country_code(user_info_data['country_code'])
         if not country:
             # country 조회 실패
             return JSONResponse(content={"error": "country not found"}, status_code=400)
 
         user_info_data['country_id'] = country.id
-        user, profile = await users_service.create_user_by_social(user_info_data)
+        user, profile = await auth_service.create_user_by_social(user_info_data)
         if not user or not profile:
             # user 생성 실패
             return JSONResponse(content={"error": "failed to create user"}, status_code=500)
