@@ -106,6 +106,7 @@ async def login_google_callback(
         refresh_token = await auth_service.create_refresh_token(user.email)
 
         # 파라미터 user name, access token 저장
+        status_massage_dict["user_id"] = user.id
         status_massage_dict["name"] = user.profile.name
         status_massage_dict["token"] = access_token
 
