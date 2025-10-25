@@ -40,3 +40,9 @@ class AuthRepository:
         except Exception as e:
             raise e
 
+class RedisRepository:
+    def __init__(self):
+        self.redis = redis_client()
+
+    async def check_redis_ping(self):
+        return await self.redis.ping()
