@@ -34,9 +34,9 @@ def get_auth_service(session: AsyncSession = Depends(get_async_session)):
 
 
 @router.get("/login/google")
-async def login_google_test():
+async def login_google():
     """
-    google login test
+    google login
     """
     try:
         params = {
@@ -67,7 +67,6 @@ async def login_google_callback(
             "client_id": SETTINGS.GOOGLE_CLIENT_ID,
             "client_secret": SETTINGS.GOOGLE_CLIENT_SECRET,
             "redirect_uri": SETTINGS.GOOGLE_REDIRECT_URI,
-            "code": code,
             "grant_type": "authorization_code",
         }
 
@@ -106,6 +105,7 @@ async def login_google_callback(
         refresh_token = await auth_service.create_refresh_token(user.email)
 
         # 파라미터 user name, access token 저장
+        status_massage_dict["user_id"] = user.id
         status_massage_dict["name"] = user.profile.name
         status_massage_dict["token"] = access_token
 
@@ -233,5 +233,20 @@ async def refresh(request: Request, auth_service: AuthService = Depends(get_auth
             return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
         
         return JSONResponse(content={"access_token": access_token})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@router.get("/redis/ping")
+async def redis_ping():
+    """
+    check redis ping
+    """
+    from app.auth.repository import RedisRepository
+    redis_repository = RedisRepository()
+    try:
+        result = await redis_repository.check_redis_ping()
+        if not result:
+            return JSONResponse(content={"message": "Redis is not running"}, status_code=500)
+        return JSONResponse(content={"message": "Redis is running"}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)

@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     DATABASE_SYNC_URL: Optional[str] = None
     DATABASE_ASYNC_URL: Optional[str] = None
 
+    # redis 설정
+    REDIS_HOST: Optional[str] = None
+    REDIS_PORT: Optional[int] = None
+    REDIS_DB: Optional[int] = None
+
     # google login 설정
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None
