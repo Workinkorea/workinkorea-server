@@ -1,6 +1,6 @@
 from typing import Optional
 from app.database import Base
-from app.profile.models.profile import Profile
+
 from sqlalchemy import Integer, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
