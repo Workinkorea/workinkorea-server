@@ -1,5 +1,5 @@
 from app.database import Base
-from app.profile.models.profile import Profile
+
 from sqlalchemy import Integer, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

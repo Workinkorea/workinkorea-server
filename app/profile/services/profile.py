@@ -1,8 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.profile.schemas.profile import ProfileDTO
 from app.profile.repositories.profile import ProfileRepository
-from app.profile.models.profile import Country
-from app.profile.schemas.profile import CountryDTO
+
 
 class ProfileService:
     def __init__(self, session: AsyncSession):

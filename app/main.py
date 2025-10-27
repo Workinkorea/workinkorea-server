@@ -5,6 +5,7 @@ from app.profile.models import *
 
 # router
 from app.auth.router import router as auth_router
+from app.profile.router import router as profile_router
 
 # app
 app = FastAPI(
@@ -28,3 +29,4 @@ app.add_middleware(
 
 app.include_router(app_router)
 app.include_router(auth_router)
+app.include_router(profile_router)
