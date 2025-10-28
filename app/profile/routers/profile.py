@@ -5,7 +5,8 @@ from fastapi import Request, APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
 
-from app.auth.service import *
+from app.auth.services.auth import AuthService
+from app.auth.models import User
 from app.profile.schemas.request import *
 from app.profile.schemas.response import *
 from app.profile.schemas.profile import ProfileDTO
