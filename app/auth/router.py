@@ -13,8 +13,10 @@ from app.database import get_async_session
 from app.database import get_redis_client
 import redis.asyncio as redis
 
-from app.auth.service import AuthRedisService
-from app.auth.service import AuthService
+from app.auth.services.redis import AuthRedisService
+from app.auth.services.auth import AuthService
+from app.auth.services.company import CompanyService
+
 from app.auth.schemas.request import *
 from app.profile.services.country import CountryService
 from app.auth.models import User
@@ -38,6 +40,9 @@ def get_country_service(session: AsyncSession = Depends(get_async_session)):
 
 def get_auth_redis_service(redis_client: redis.Redis = Depends(get_redis_client)):
     return AuthRedisService(redis_client)
+
+def get_company_service(session: AsyncSession = Depends(get_async_session)):
+    return CompanyService(session)
 
 
 @router.get("/login/google")
@@ -64,6 +69,7 @@ async def login_google():
 async def login_google_callback(
     code: str,
     auth_service: AuthService = Depends(get_auth_service),
+    auth_redis_service: AuthRedisService = Depends(get_auth_redis_service),
 ):
     """
     google login callback
@@ -116,8 +122,8 @@ async def login_google_callback(
         status_massage_dict["name"] = user.profile.name
         status_massage_dict["token"] = access_token
 
-        # jwt refresh token db 저장 / 추후 redis 저장 예정
-        refresh_token_obj = await auth_service.create_refresh_token_to_db(refresh_token, user.id)
+        # jwt refresh token redis 저장
+        refresh_token_obj = await auth_redis_service.set_refresh_token(refresh_token, user.email)
         if not refresh_token_obj:
             status_massage = urlencode(
                 {"status": "error", "message": "Failed to create refresh token"})
@@ -196,12 +202,16 @@ async def signup(
 
 
 @router.delete("/logout")
-async def logout(request: Request, auth_service: AuthService = Depends(get_auth_service)):
+async def logout(request: Request, auth_redis_service: AuthRedisService = Depends(get_auth_redis_service)):
     """
     logout delete refresh token from db and delete cookies
     """
     try:
-        result = await auth_service.delete_refresh_token_from_db(request.cookies.get("refresh_token"))
+        refresh_token = request.cookies.get("refresh_token")
+        if not refresh_token:
+            return JSONResponse(content={"message": "Refresh token not found"}, status_code=401)
+
+        result = await auth_redis_service.delete_refresh_token(refresh_token)
         if not result:
             return JSONResponse(content={"message": "Refresh token not found"}, status_code=401)
 
@@ -217,7 +227,10 @@ async def logout(request: Request, auth_service: AuthService = Depends(get_auth_
 
 
 @router.post("/refresh")
-async def refresh(request: Request, auth_service: AuthService = Depends(get_auth_service)):
+async def refresh(request: Request, 
+    auth_service: AuthService = Depends(get_auth_service), 
+    auth_redis_service: AuthRedisService = Depends(get_auth_redis_service)
+):
     """
     get new access token by refresh token
     """
@@ -234,6 +247,14 @@ async def refresh(request: Request, auth_service: AuthService = Depends(get_auth
         if not user_email:
             return JSONResponse(content={"message": "Invalid refresh token"}, status_code=401)
 
+        # refresh token 검증
+        email = await auth_redis_service.get_refresh_token(refresh_token)
+        if not email:
+            return JSONResponse(content={"message": "Invalid refresh token"}, status_code=401)
+
+        await auth_redis_service.delete_refresh_token(refresh_token)
+        await auth_redis_service.set_refresh_token(refresh_token, email) # 10 days
+        
         # jwt token 생성
         access_token = await auth_service.create_access_token(user_email)
         if not access_token:
@@ -286,5 +307,62 @@ async def email_certify_verify(request: EmailCertifyRequest, auth_redis_service:
             return JSONResponse(content={"message": "Email certification code is incorrect"}, status_code=400)
         
         return JSONResponse(content={"message": "Email certification code verified"}, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@router.post("/company/signup")
+async def company_signup(request: CompanySignupRequest, 
+    company_service: CompanyService = Depends(get_company_service),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """
+    company signup
+    """
+    try:
+        company_data = request.model_dump()
+        if not company_data['company_name']:
+            return JSONResponse(content={"message": "Company name is required"}, status_code=400)
+        if not company_data['company_number']:
+            return JSONResponse(content={"message": "Company number is required"}, status_code=400)
+        if not company_data['email']:
+            return JSONResponse(content={"message": "Email is required"}, status_code=400)
+        if not company_data['name']:
+            return JSONResponse(content={"message": "Name is required"}, status_code=400)
+        if not company_data['phone']:
+            return JSONResponse(content={"message": "Phone is required"}, status_code=400)
+        if not company_data['position']:
+            return JSONResponse(content={"message": "Position is required"}, status_code=400)
+
+        user = await auth_service.get_user_by_email(company_data['email'])
+        if not user:
+            return JSONResponse(content={"message": "User not found"}, status_code=404)
+
+        managers = {
+            "user_id": user.id,
+            "email": user.email,
+            "name": company_data['name'],
+            "phone": company_data['phone'],
+            "position": company_data['position'],
+        }
+
+        company_data['managers'] = managers
+
+        company = await company_service.create_company_to_db(company_data)
+        if not company:
+            return JSONResponse(content={"message": "Failed to create company"}, status_code=500)
+
+        company_info ={
+            "company_id": company.id,
+            "company_name": company.company_name,
+            "company_number": company.company_number,
+            "position": company_data['position'],
+        }
+
+        result = await auth_service.update_user_company_info(user.email, company_info)
+        if not result:
+            return JSONResponse(content={"message": "Failed to update user company info"}, status_code=500)
+
+        return JSONResponse(content={"message": "Company created"}, status_code=201)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
