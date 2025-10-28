@@ -3,6 +3,7 @@ import datetime
 from app.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, ForeignKey, DateTime, Boolean
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 class User(Base):
@@ -10,6 +11,8 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String, index=True, unique=True)
     passport_certi: Mapped[bool] = mapped_column(Boolean, index=True)
+
+    company_info: Mapped[dict] = mapped_column(JSONB, nullable=True, default=None)
 
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship("RefreshToken", back_populates="user")
     profile: Mapped["Profile"] = relationship(
@@ -28,3 +31,11 @@ class RefreshToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
 
     user: Mapped["User"] = relationship("User", back_populates="refresh_tokens")
+
+
+class Company(Base):
+    __tablename__ = "companies"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    company_number: Mapped[int] = mapped_column(Integer, index=True, unique=True)
+    company_name: Mapped[str] = mapped_column(String, index=True)
+    managers: Mapped[dict] = mapped_column(JSONB, default=dict)
