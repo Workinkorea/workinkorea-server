@@ -12,3 +12,11 @@ class SignupRequest(BaseModel):
 
 class EmailCertifyRequest(BaseModel):
     email: str
+
+class CompanySignupRequest(BaseModel):
+    company_name: str
+    company_number: int
+    email: str
+    name: str
+    phone: str
+    position:str
