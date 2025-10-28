@@ -110,28 +110,33 @@ class AuthService:
         """
         return await self.auth_repository.delete_refresh_token_from_db(refresh_token)
 
-    async def get_current_user(request: Request):
-        """
-        get current user
-        """
-        access_token = request.cookies.get("access_token")
+    # async def get_current_user(self, request: Request) -> User | JSONResponse:
+    #     """
+    #     get current user
+    #     args:
+    #         request: Request
+    #     """
+    #     access_token = request.cookies.get("access_token")
 
-        if not access_token:
-            return JSONResponse(content={"message": "Not authenticated"}, status_code=401)
+    #     if not access_token:
+    #         return JSONResponse(content={"message": "Not authenticated"}, status_code=401)
 
-        try:
-            # jwt token 검증 이메일 반환
-            payload = jwt.decode(access_token, SETTINGS.JWT_SECRET,
-                                algorithms=[SETTINGS.JWT_ALGORITHM])
+    #     try:
+    #         # jwt token 검증 이메일 반환
+    #         payload = jwt.decode(access_token, SETTINGS.JWT_SECRET,
+    #                             algorithms=[SETTINGS.JWT_ALGORITHM])
 
-            email = payload.get("sub")
-            if not email:
-                return JSONResponse(content={"message": "Invalid token"}, status_code=401)
-            return email
-        except jwt.ExpiredSignatureError:
-            return JSONResponse(content={"message": "Access token expired"}, status_code=401)
-        except Exception as e:
-            return JSONResponse(content={"message": "Invalid token"}, status_code=401)
+    #         email = payload.get("sub")
+    #         if not email:
+    #             return JSONResponse(content={"message": "Invalid token"}, status_code=401)
+    #         user = await self.auth_repository.get_user_by_email(email)
+    #         if not user:
+    #             return JSONResponse(content={"message": "User not found"}, status_code=404)
+    #         return user
+    #     except jwt.ExpiredSignatureError:
+    #         return JSONResponse(content={"message": "Access token expired"}, status_code=401)
+    #     except Exception as e:
+    #         return JSONResponse(content={"message": "Invalid token"}, status_code=401)
 
     async def create_user_by_social(self, user_info_data: dict) -> tuple[User, Profile] | JSONResponse:
         """

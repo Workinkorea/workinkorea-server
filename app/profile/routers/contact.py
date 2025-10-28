@@ -1,14 +1,13 @@
-# app/auth/router.py
+# app/profile/routers/contact.py
 from fastapi.responses import JSONResponse
-from fastapi import Request, APIRouter, Depends
+from fastapi import APIRouter, Depends
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.service import *
-from app.profile.schemas.request import *
-from app.profile.schemas.response import *
-from app.profile.schemas.contact import ContactDTO
+from app.auth.models import User
+from app.auth.dependencies import get_current_user
+from app.profile.schemas.contact import ContactDTO, UpdateContactRequest, ContactResponse
 from app.profile.services.contact import ContactService
 
 
@@ -24,26 +23,36 @@ def get_contact_service(session: AsyncSession = Depends(get_async_session)):
     return ContactService(session)
 
 
-def get_auth_service(session: AsyncSession = Depends(get_async_session)):
-    return AuthService(session)
-
-
-@router.get("/contact")
+@router.get("")
 async def get_contact(
-    request: Request,
-    auth_service: AuthService = Depends(get_auth_service),
+    user: User = Depends(get_current_user),
     contact_service: ContactService = Depends(get_contact_service)
 ) -> ContactResponse:
     """
     get current user contact
     """
-    user: User = await auth_service.get_current_user(request)
     contact: ContactDTO = await contact_service.get_contact_by_user_id(user.id)
     if not contact:
         return JSONResponse(content={"error": "contact not found"}, status_code=404)
-    return ContactResponse(
-        phone_number=contact.phone_number,
-        github_url=contact.github_url,
-        linkedin_url=contact.linkedin_url,
-        website_url=contact.website_url
-    )
+    return ContactResponse.model_validate(contact)
+
+
+@router.put("")
+async def update_contact(
+    update_contact_request: UpdateContactRequest,
+    user: User = Depends(get_current_user),
+    contact_service: ContactService = Depends(get_contact_service)
+) -> ContactResponse:
+    """
+    update current user contact
+    """
+    contact: ContactDTO = await contact_service.get_contact_by_user_id(user.id)
+    if not contact:
+        return JSONResponse(content={"error": "contact not found"}, status_code=404)
+    updated = await contact_service.update_contact(user.id, update_contact_request.model_dump())
+    if not updated:
+        return JSONResponse(content={"error": "failed to update contact"}, status_code=400)
+    updated_contact: ContactDTO = await contact_service.get_contact_by_user_id(user.id)
+    if not updated_contact:
+        return JSONResponse(content={"error": "failed to get updated contact"}, status_code=400)
+    return ContactResponse.model_validate(updated_contact)
