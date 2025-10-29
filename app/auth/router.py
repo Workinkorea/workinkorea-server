@@ -7,6 +7,7 @@ from app.core.settings import SETTINGS
 from urllib.parse import urlencode
 import httpx
 import re
+import hashlib
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
@@ -313,8 +314,7 @@ async def email_certify_verify(request: EmailCertifyVerifyRequest, auth_redis_se
 
 @router.post("/company/signup")
 async def company_signup(request: CompanySignupRequest, 
-    company_service: CompanyService = Depends(get_company_service),
-    auth_service: AuthService = Depends(get_auth_service)
+    company_service: CompanyService = Depends(get_company_service)
 ):
     """
     company signup
@@ -331,38 +331,79 @@ async def company_signup(request: CompanySignupRequest,
             return JSONResponse(content={"error": "Name is required"}, status_code=400)
         if not company_data['phone']:
             return JSONResponse(content={"error": "Phone is required"}, status_code=400)
-        if not company_data['position']:
-            return JSONResponse(content={"error": "Position is required"}, status_code=400)
+        
+        # company 조회
+        company = await company_service.get_company_by_company_number(company_data['company_number'])
 
-        user = await auth_service.get_user_by_email(company_data['email'])
-        if not user:
-            return JSONResponse(content={"error": "User not found"}, status_code=404)
-
-        managers = {
-            "user_id": user.id,
-            "email": user.email,
-            "name": company_data['name'],
-            "phone": company_data['phone'],
-            "position": company_data['position'],
-        }
-
-        company_data['managers'] = managers
-
-        company = await company_service.create_company_to_db(company_data)
         if not company:
-            return JSONResponse(content={"error": "Failed to create company"}, status_code=500)
-
-        company_info ={
+            # company 생성
+            company = await company_service.create_company_to_db(company_data)
+            if not company:
+                return JSONResponse(content={"error": "Failed to create company"}, status_code=500)
+        
+        # company user 생성
+        company_user_data:dict = {
             "company_id": company.id,
-            "company_name": company.company_name,
-            "company_number": company.company_number,
-            "position": company_data['position'],
+            "email": company_data['email'],
+            "password": company_data['password'],
+            "name": company_data['name'],
+            "phone": company_data['phone']
         }
 
-        result = await auth_service.update_user_company_info(user.email, company_info)
-        if not result:
-            return JSONResponse(content={"error": "Failed to update user company info"}, status_code=500)
+        company_user = await company_service.create_company_user_to_db(company_user_data)
+        if not company_user:
+            return JSONResponse(content={"error": "Failed to create company user"}, status_code=500)
+    
+        return JSONResponse(content={"url": f"{SETTINGS.CLIENT_URL}/company"}, status_code=201)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
-        return JSONResponse(content={"message": "Company created"}, status_code=201)
+
+@router.post("/company/login")
+async def company_login(request: CompanyLoginRequest,
+    company_service: CompanyService = Depends(get_company_service),
+    auth_service: AuthService = Depends(get_auth_service),
+    auth_redis_service: AuthRedisService = Depends(get_auth_redis_service)
+):
+    """
+    company login
+    """
+    try:
+        company_data = request.model_dump()
+        if not company_data['email']:
+            return JSONResponse(content={"error": "Email is required"}, status_code=400)
+
+        if not company_data['password']:
+            return JSONResponse(content={"error": "Password is required"}, status_code=400)
+        
+        company_user = await company_service.company_user_login(company_data)
+        if not company_user:
+            return JSONResponse(content={"error": "Company user not found"}, status_code=404)
+
+        access_token = await auth_service.create_access_token(company_user.email)
+        refresh_token = await auth_service.create_refresh_token(company_user.email)
+
+        refresh_token_redis = await auth_redis_service.set_refresh_token(refresh_token, company_user.email)
+        if not refresh_token_redis:
+            return JSONResponse(content={"error": "Failed to set refresh token"}, status_code=500)
+
+        status_massage_dict = {
+            "user_id": company_user.id,
+            "company_id": company_user.company_id,
+            "token": access_token,
+        }
+
+        url = f"{SETTINGS.CLIENT_URL}/company?{urlencode(status_massage_dict)}"
+        response = JSONResponse(content={"url": url})
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=False,  # 개발 환경에서는 secure=False
+            max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
+            samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
+        return response
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
