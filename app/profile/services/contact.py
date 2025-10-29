@@ -18,3 +18,15 @@ class ContactService:
         if not contact:
             return None
         return ContactDTO.model_validate(contact)
+
+    async def update_contact(self, user_id: int, contact_data: dict) -> ContactDTO | None:
+        """
+        update contact
+        args:
+            user_id: int
+            contact_data: dict
+        """
+        updated_contact = await self.contact_repository.update_contact(user_id, contact_data)
+        if not updated_contact:
+            return None
+        return ContactDTO.model_validate(updated_contact)

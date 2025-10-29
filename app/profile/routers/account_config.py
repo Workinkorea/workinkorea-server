@@ -50,13 +50,7 @@ async def update_account_config(
     """
     update current user account config
     """
-    account_config: AccountConfigDTO = await account_config_service.get_account_config_by_user_id(user.id)
-    if not account_config:
-        return JSONResponse(content={"error": "account config not found"}, status_code=404)
-    updated = await account_config_service.update_account_config(user.id, update_account_config_request.model_dump())
-    if not updated:
-        return JSONResponse(content={"error": "failed to update account config"}, status_code=400)
-    updated_account_config: AccountConfigDTO = await account_config_service.get_account_config_by_user_id(user.id)
+    updated_account_config: AccountConfigDTO = await account_config_service.update_account_config(user.id, update_account_config_request.model_dump())
     if not updated_account_config:
-        return JSONResponse(content={"error": "failed to get updated account config"}, status_code=400)
+        return JSONResponse(content={"error": "failed to update account config"}, status_code=400)
     return AccountConfigResponse.model_validate(updated_account_config)

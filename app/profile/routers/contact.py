@@ -46,13 +46,7 @@ async def update_contact(
     """
     update current user contact
     """
-    contact: ContactDTO = await contact_service.get_contact_by_user_id(user.id)
-    if not contact:
-        return JSONResponse(content={"error": "contact not found"}, status_code=404)
-    updated = await contact_service.update_contact(user.id, update_contact_request.model_dump())
-    if not updated:
-        return JSONResponse(content={"error": "failed to update contact"}, status_code=400)
-    updated_contact: ContactDTO = await contact_service.get_contact_by_user_id(user.id)
+    updated_contact: ContactDTO = await contact_service.update_contact(user.id, update_contact_request.model_dump())
     if not updated_contact:
-        return JSONResponse(content={"error": "failed to get updated contact"}, status_code=400)
+        return JSONResponse(content={"error": "failed to update contact"}, status_code=400)
     return ContactResponse.model_validate(updated_contact)

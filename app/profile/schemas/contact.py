@@ -3,6 +3,7 @@ from typing import Optional
 
 
 class ContactDTO(BaseModel):
+    user_id: int
     phone_number: str
     github_url: Optional[str] = None
     linkedin_url: Optional[str] = None
@@ -13,7 +14,7 @@ class ContactDTO(BaseModel):
 
 
 class UpdateContactRequest(BaseModel):
-    # 이메일은 바꿀 수 없게 해야함 (아이디로 사용.)
+    user_id: int
     phone_number: str
     github_url: Optional[str] = None
     linkedin_url: Optional[str] = None
@@ -24,6 +25,7 @@ class UpdateContactRequest(BaseModel):
 
 
 class ContactResponse(BaseModel):
+    user_id: int
     phone_number: str
     github_url: Optional[str] = None
     linkedin_url: Optional[str] = None

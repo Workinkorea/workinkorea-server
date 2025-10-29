@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 
 class AccountConfigDTO(BaseModel):
+    user_id: int
     sns_message_notice: bool
     email_notice: bool
 
@@ -10,6 +11,7 @@ class AccountConfigDTO(BaseModel):
 
 
 class UpdateAccountConfigRequest(BaseModel):
+    user_id: int
     sns_message_notice: bool
     email_notice: bool
 
@@ -18,6 +20,7 @@ class UpdateAccountConfigRequest(BaseModel):
 
 
 class AccountConfigResponse(BaseModel):
+    user_id: int
     sns_message_notice: bool
     email_notice: bool
 

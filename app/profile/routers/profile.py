@@ -46,7 +46,7 @@ async def update_profile(
     """
     update current user profile
     """
-    updated = await profile_service.update_profile(user.id, update_profile_request.model_dump())
-    if not updated:
+    updated_profile: ProfileDTO = await profile_service.update_profile(user.id, update_profile_request.model_dump())
+    if not updated_profile:
         return JSONResponse(content={"error": "failed to update profile"}, status_code=400)
-    return JSONResponse(content={"message": "profile updated successfully"}, status_code=200)
+    return ProfileResponse.model_validate(updated_profile)
