@@ -1,6 +1,5 @@
 # app/auth/service.py
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from app.auth.models import RefreshToken
 from app.core.settings import SETTINGS
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -90,23 +89,6 @@ class AuthService:
             return refresh_token
         except Exception as e:
             raise e
-
-    async def create_refresh_token_to_db(self, refresh_token: str, user_id: int) -> RefreshToken | None:
-        """
-        create refresh token db
-        args:
-            refresh_token: str
-            user_id: int
-        """
-        return await self.auth_repository.create_refresh_token_to_db(refresh_token, user_id)
-
-    async def delete_refresh_token_from_db(self, refresh_token: str) -> bool:
-        """
-        delete refresh token from db
-        args:
-            refresh_token: str
-        """
-        return await self.auth_repository.delete_refresh_token_from_db(refresh_token)
 
     async def get_current_user(request: Request):
         """
