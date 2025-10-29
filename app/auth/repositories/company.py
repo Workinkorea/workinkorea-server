@@ -18,7 +18,8 @@ class CompanyRepository:
         try:
             stmt = insert(Company).values(
                 company_number=company_data['company_number'],
-                company_name=company_data['company_name']
+                company_name=company_data['company_name'],
+                managers=company_data['managers']
             ).returning(Company)
             result = await self.session.execute(stmt)
             await self.session.commit()

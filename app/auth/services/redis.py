@@ -23,14 +23,15 @@ class AuthRedisService:
         """
         get_redis_code = await self.auth_redis_repository.get_redis(email)
         if not get_redis_code:
-            return JSONResponse(content={"message": "Email certification code not found"}, status_code=404)
+            return JSONResponse(content={"error": "Email certification code not found"}, status_code=404)
         
         if get_redis_code != code:
-            return JSONResponse(content={"message": "Email certification code is incorrect"}, status_code=400)
+            return JSONResponse(content={"error": "Email certification code is incorrect"}, status_code=400)
 
+        # 자동으로 시간 끝나면 삭제하게?
         delete_redis_code = await self.auth_redis_repository.delete_redis(email)
         if not delete_redis_code:
-            return JSONResponse(content={"message": "Failed to delete email certification code"}, status_code=500)
+            return JSONResponse(content={"error": "Failed to delete email certification code"}, status_code=500)
 
         return True
     
