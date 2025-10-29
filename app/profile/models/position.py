@@ -1,7 +1,7 @@
 from typing import Optional
 from app.database import Base
 from sqlalchemy import Integer, String
-from app.profile.models.profile import Profile
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 

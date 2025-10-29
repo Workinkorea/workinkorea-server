@@ -3,15 +3,15 @@ import datetime
 from app.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, ForeignKey, DateTime, Boolean
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String, index=True, unique=True)
-    passport_certi: Mapped[bool] = mapped_column(Boolean, index=True)
+    passport_certi: Mapped[bool] = mapped_column(Boolean, index=True, default=False)
 
-    refresh_tokens: Mapped[list["RefreshToken"]] = relationship("RefreshToken", back_populates="user")
     profile: Mapped["Profile"] = relationship(
         "Profile",
         back_populates="user",
@@ -19,12 +19,24 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
-
-class RefreshToken(Base):
-    __tablename__ = "refresh_tokens"
+class Company(Base):
+    __tablename__ = "companies"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    token: Mapped[str] = mapped_column(String, unique=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    company_number: Mapped[int] = mapped_column(Integer, index=True, unique=True)
+    company_name: Mapped[str] = mapped_column(String, index=True)
 
-    user: Mapped["User"] = relationship("User", back_populates="refresh_tokens")
+    company_users: Mapped[list["CompanyUser"]] = relationship("CompanyUser", back_populates="company")
+
+
+class CompanyUser(Base):
+    __tablename__ = "company_users"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
+
+    email: Mapped[str] = mapped_column(String, index=True, unique=True)
+    password: Mapped[str] = mapped_column(String, index=True)
+
+    name: Mapped[str] = mapped_column(String, index=True)
+    phone: Mapped[int] = mapped_column(Integer, index=True)
+
+    company: Mapped["Company"] = relationship("Company", back_populates="company_users")
