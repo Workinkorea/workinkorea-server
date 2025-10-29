@@ -275,17 +275,17 @@ async def email_certification(request: EmailCertifyRequest,
     try:
         email = request.model_dump().get("email")
         if not email:
-            return JSONResponse(content={"message": "Email is required"}, status_code=400)
+            return JSONResponse(content={"error": "Email is required"}, status_code=400)
 
         # 이메일 전송
         code = await auth_service.send_email_verify_code(email)
         if not code:
-            return JSONResponse(content={"message": "Failed to send email certification code"}, status_code=500)
+            return JSONResponse(content={"error": "Failed to send email certification code"}, status_code=500)
 
         # 이메일 코드 저장
         set_redis = await auth_redis_service.set_email_certify_code(email, code)
         if not set_redis:
-            return JSONResponse(content={"message": "Failed to set email certification code"}, status_code=500)
+            return JSONResponse(content={"error": "Failed to set email certification code"}, status_code=500)
 
         return JSONResponse(content={"message": "Send email certification code"}, status_code=200)
     except Exception as e:
@@ -293,18 +293,18 @@ async def email_certification(request: EmailCertifyRequest,
 
 
 @router.post("/email/certify/verify")
-async def email_certify_verify(request: EmailCertifyRequest, auth_redis_service: AuthRedisService = Depends(get_auth_redis_service)):
+async def email_certify_verify(request: EmailCertifyVerifyRequest, auth_redis_service: AuthRedisService = Depends(get_auth_redis_service)):
     """
     email certification verify
     """
     try:
         request = request.model_dump()
         if not request['email']:
-            return JSONResponse(content={"message": "Email is required"}, status_code=400)
+            return JSONResponse(content={"error": "Email is required"}, status_code=400)
 
         get_redis_code = await auth_redis_service.get_email_certify_code(request['email'], request['code'])
         if not get_redis_code:
-            return JSONResponse(content={"message": "Email certification code is incorrect"}, status_code=400)
+            return JSONResponse(content={"error": "Email certification code is incorrect"}, status_code=400)
         
         return JSONResponse(content={"message": "Email certification code verified"}, status_code=200)
     except Exception as e:
@@ -322,21 +322,21 @@ async def company_signup(request: CompanySignupRequest,
     try:
         company_data = request.model_dump()
         if not company_data['company_name']:
-            return JSONResponse(content={"message": "Company name is required"}, status_code=400)
+            return JSONResponse(content={"error": "Company name is required"}, status_code=400)
         if not company_data['company_number']:
-            return JSONResponse(content={"message": "Company number is required"}, status_code=400)
+            return JSONResponse(content={"error": "Company number is required"}, status_code=400)
         if not company_data['email']:
-            return JSONResponse(content={"message": "Email is required"}, status_code=400)
+            return JSONResponse(content={"error": "Email is required"}, status_code=400)
         if not company_data['name']:
-            return JSONResponse(content={"message": "Name is required"}, status_code=400)
+            return JSONResponse(content={"error": "Name is required"}, status_code=400)
         if not company_data['phone']:
-            return JSONResponse(content={"message": "Phone is required"}, status_code=400)
+            return JSONResponse(content={"error": "Phone is required"}, status_code=400)
         if not company_data['position']:
-            return JSONResponse(content={"message": "Position is required"}, status_code=400)
+            return JSONResponse(content={"error": "Position is required"}, status_code=400)
 
         user = await auth_service.get_user_by_email(company_data['email'])
         if not user:
-            return JSONResponse(content={"message": "User not found"}, status_code=404)
+            return JSONResponse(content={"error": "User not found"}, status_code=404)
 
         managers = {
             "user_id": user.id,
@@ -350,7 +350,7 @@ async def company_signup(request: CompanySignupRequest,
 
         company = await company_service.create_company_to_db(company_data)
         if not company:
-            return JSONResponse(content={"message": "Failed to create company"}, status_code=500)
+            return JSONResponse(content={"error": "Failed to create company"}, status_code=500)
 
         company_info ={
             "company_id": company.id,
@@ -361,7 +361,7 @@ async def company_signup(request: CompanySignupRequest,
 
         result = await auth_service.update_user_company_info(user.email, company_info)
         if not result:
-            return JSONResponse(content={"message": "Failed to update user company info"}, status_code=500)
+            return JSONResponse(content={"error": "Failed to update user company info"}, status_code=500)
 
         return JSONResponse(content={"message": "Company created"}, status_code=201)
     except Exception as e:
