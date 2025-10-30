@@ -14,10 +14,6 @@ class Settings(BaseSettings):
     MAIL_FROM: Optional[str] = None
     MAIL_PORT: Optional[int] = None
     MAIL_SERVER: Optional[str] = None
-    MAIL_STARTTLS: Optional[bool] = False
-    MAIL_SSL_TLS: Optional[bool] = True
-    USE_CREDENTIALS: Optional[bool] = True
-    VALIDATE_CERTS: Optional[bool] = True
 
     # 데이터베이스 설정
     DATABASE_SYNC_URL: Optional[str] = None

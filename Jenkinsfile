@@ -12,6 +12,12 @@ pipeline {
         COOKIE_DOMAIN = credentials('cookie-domain')
         CLIENT_URL = credentials('client-url')
 
+        MAIL_USERNAME = credentials('mail-username')
+        MAIL_PASSWORD = credentials('mail-password')
+        MAIL_FROM = credentials('mail-from')
+        MAIL_PORT = credentials('mail-port')
+        MAIL_SERVER = credentials('mail-server')
+
         DATABASE_SYNC_URL = credentials('database-sync-url')
         DATABASE_ASYNC_URL = credentials('database-async-url')
 
@@ -49,7 +55,7 @@ pipeline {
                     docker rmi ${env.DOCKER_IMAGE_NAME} || true
                     """
 
-                    sh "docker build -t ${env.DOCKER_IMAGE_NAME} ."
+                    sh "docker build -f Dockerfile -t ${env.DOCKER_IMAGE_NAME} ."
                 }
                 echo "Docker build finished"
             }
@@ -93,6 +99,11 @@ pipeline {
                         -e JWT_ALGORITHM=${env.JWT_ALGORITHM} \
                         -e ACCESS_TOKEN_EXPIRE_MINUTES=${env.ACCESS_TOKEN_EXPIRE_MINUTES} \
                         -e REFRESH_TOKEN_EXPIRE_MINUTES=${env.REFRESH_TOKEN_EXPIRE_MINUTES} \
+                        -e MAIL_USERNAME=${env.MAIL_USERNAME} \
+                        -e MAIL_PASSWORD="${env.MAIL_PASSWORD}" \
+                        -e MAIL_FROM=${env.MAIL_FROM} \
+                        -e MAIL_PORT=${env.MAIL_PORT} \
+                        -e MAIL_SERVER=${env.MAIL_SERVER} \
                         workinkorea-server
                         """
                 }
