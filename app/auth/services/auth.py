@@ -12,16 +12,25 @@ import jwt
 from app.auth.repositories.auth import AuthRepository
 
 from app.profile.repositories.profile import ProfileRepository
+from app.profile.repositories.contact import ContactRepository
+from app.profile.repositories.account_config import AccountConfigRepository
 from app.profile.models.profile import Profile
 from app.auth.models import User
-from fastapi import Request
+from app.profile.models.contact import Contact
+from app.profile.models.account_config import AccountConfig
 from fastapi.responses import JSONResponse
+from app.profile.schemas.profile import ProfileDTO
+from app.profile.schemas.contact import ContactDTO
+from app.profile.schemas.account_config import AccountConfigDTO
+from app.auth.schemas.user import UserDTO
 
 class AuthService:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.auth_repository = AuthRepository(session)
         self.profile_repository = ProfileRepository(session)
+        self.contact_repository = ContactRepository(session)
+        self.account_config_repository = AccountConfigRepository(session)
 
     async def send_email_verify_code(self, email: str):
         """ 
@@ -90,45 +99,68 @@ class AuthService:
         except Exception as e:
             raise e
 
-    async def get_current_user(request: Request):
-        """
-        get current user
-        """
-        access_token = request.cookies.get("access_token")
+    # async def get_current_user(self, request: Request) -> User | JSONResponse:
+    #     """
+    #     get current user
+    #     args:
+    #         request: Request
+    #     """
+    #     access_token = request.cookies.get("access_token")
 
-        if not access_token:
-            return JSONResponse(content={"message": "Not authenticated"}, status_code=401)
+    #     if not access_token:
+    #         return JSONResponse(content={"message": "Not authenticated"}, status_code=401)
 
-        try:
-            # jwt token 검증 이메일 반환
-            payload = jwt.decode(access_token, SETTINGS.JWT_SECRET,
-                                algorithms=[SETTINGS.JWT_ALGORITHM])
+    #     try:
+    #         # jwt token 검증 이메일 반환
+    #         payload = jwt.decode(access_token, SETTINGS.JWT_SECRET,
+    #                             algorithms=[SETTINGS.JWT_ALGORITHM])
 
-            email = payload.get("sub")
-            if not email:
-                return JSONResponse(content={"message": "Invalid token"}, status_code=401)
-            return email
-        except jwt.ExpiredSignatureError:
-            return JSONResponse(content={"message": "Access token expired"}, status_code=401)
-        except Exception as e:
-            return JSONResponse(content={"message": "Invalid token"}, status_code=401)
+    #         email = payload.get("sub")
+    #         if not email:
+    #             return JSONResponse(content={"message": "Invalid token"}, status_code=401)
+    #         user = await self.auth_repository.get_user_by_email(email)
+    #         if not user:
+    #             return JSONResponse(content={"message": "User not found"}, status_code=404)
+    #         return user
+    #     except jwt.ExpiredSignatureError:
+    #         return JSONResponse(content={"message": "Access token expired"}, status_code=401)
+    #     except Exception as e:
+    #         return JSONResponse(content={"message": "Invalid token"}, status_code=401)
 
-    async def create_user_by_social(self, user_info_data: dict) -> tuple[User, Profile] | JSONResponse:
+    async def create_user_by_social(self, user_info_data: dict) -> tuple[UserDTO, ProfileDTO, ContactDTO, AccountConfigDTO] | JSONResponse:
         """
         create user by social
         args:
             user_info_data: dict
         """
-        user = await self.auth_repository.create_user_by_social(user_info_data)
+        user: User = await self.auth_repository.create_user_by_social(user_info_data)
         if not user:
             return JSONResponse(content={"error": "failed to create user"}, status_code=500)
         
         user_info_data['user_id'] = user.id
-        profile = await self.profile_repository.create_profile(user_info_data)
+        profile: Profile = await self.profile_repository.create_profile(user_info_data)
         if not profile:
             return JSONResponse(content={"error": "failed to create profile"}, status_code=500)
+
+        contact: Contact = await self.contact_repository.create_contact(
+            profile.user_id, {
+                'phone_number': None,
+                'github_url': None,
+                'linkedin_url': None,
+                'website_url': None,
+            })
+        if not contact:
+            return JSONResponse(content={"error": "failed to create contact"}, status_code=500)
+
+        account_config: AccountConfig = await self.account_config_repository.create_account_config(
+            profile.user_id, {
+                'sns_message_notice': True,
+                'email_notice': True,
+            })
+        if not account_config:
+            return JSONResponse(content={"error": "failed to create account config"}, status_code=500)
         
-        return user, profile
+        return UserDTO.model_validate(user), ProfileDTO.model_validate(profile), ContactDTO.model_validate(contact), AccountConfigDTO.model_validate(account_config)
 
     async def get_user_by_email(self, email: str) -> User | None:
         """

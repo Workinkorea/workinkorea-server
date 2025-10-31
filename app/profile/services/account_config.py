@@ -18,3 +18,15 @@ class AccountConfigService:
         if not account_config:
             return None
         return AccountConfigDTO.model_validate(account_config)
+
+    async def update_account_config(self, user_id: int, account_config_data: dict) -> bool:
+        """
+        update account config to db
+        args:
+            user_id: int
+            account_config_data: dict 
+        """
+        updated = await self.account_config_repository.update_account_config(user_id, account_config_data)
+        if not updated:
+            return None
+        return AccountConfigDTO.model_validate(updated)

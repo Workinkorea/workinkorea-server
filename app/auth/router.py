@@ -7,7 +7,6 @@ from app.core.settings import SETTINGS
 from urllib.parse import urlencode
 import httpx
 import re
-import hashlib
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
@@ -192,8 +191,8 @@ async def signup(
             return JSONResponse(content={"error": "country not found"}, status_code=400)
 
         user_info_data['country_id'] = country.id
-        user, profile = await auth_service.create_user_by_social(user_info_data)
-        if not user or not profile:
+        user_dto, profile_dto, contact_dto, account_config_dto = await auth_service.create_user_by_social(user_info_data)
+        if not user_dto or not profile_dto or not contact_dto or not account_config_dto:
             # user 생성 실패
             return JSONResponse(content={"error": "failed to create user"}, status_code=500)
     

@@ -30,20 +30,17 @@ class ProfileService:
             return False
         return True
 
-    async def update_profile(self, user_id: int, profile_data: dict) -> bool:
+    async def update_profile(self, user_id: int, profile_data: dict) -> ProfileDTO | None:
         """
         update profile
         args:
             user_id: int
             profile_data: dict
         """
-        profile = await self.profile_repository.get_profile_by_user_id(user_id)
-        if not profile:
-            return False
         updated = await self.profile_repository.update_profile(user_id, profile_data)
         if not updated:
-            return False
-        return True
+            return None
+        return ProfileDTO.model_validate(updated)
 
     async def delete_profile(self, user_id: int) -> bool:
         """

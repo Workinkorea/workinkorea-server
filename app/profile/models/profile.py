@@ -22,8 +22,13 @@ class Profile(Base):
     address: Mapped[Optional[str]] = mapped_column(String, index=True, nullable=True)
 
     # 이건 프론트에서 ENUM 확인해서 기본값 설정해야 함.
-    position_id: Mapped[int] = mapped_column(ForeignKey("positions.id"), index=True, nullable=True)
-    job_status: Mapped[str] = mapped_column(String, index=True, nullable=True) # 이것도 프론트에서 ENUM 확인.
+    position_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("positions.id"),
+        index=True,
+        nullable=True
+    )
+    job_status: Mapped[str] = mapped_column(String, index=True, nullable=True)
     portfolio_url: Mapped[Optional[str]] = mapped_column(String, index=True, nullable=True) 
 
     birth_date: Mapped[datetime.date] = mapped_column(Date, index=True)
