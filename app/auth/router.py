@@ -264,7 +264,7 @@ async def refresh(request: Request,
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-@router.get("/email/certify")
+@router.post("/email/certify")
 async def email_certification(request: EmailCertifyRequest,
     auth_redis_service: AuthRedisService = Depends(get_auth_redis_service),
     auth_service: AuthService = Depends(get_auth_service),
