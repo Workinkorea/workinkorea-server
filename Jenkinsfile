@@ -8,6 +8,8 @@ pipeline {
         DOCKER_IMAGE_NAME = "workinkorea-server"
         PORT = 8000
 
+        DISCORD_WEBHOOK_URL = credentials('discord-webhook-url')
+
         // 환경변수 .env 설정
         COOKIE_DOMAIN = credentials('cookie-domain')
         CLIENT_URL = credentials('client-url')
@@ -173,7 +175,7 @@ pipeline {
                                 ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
                             """
 
-                            sleep 10
+                            sleep 5
                              if (env.COLOR != "none") {
                                 sh "docker stop ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true"
                              }
@@ -223,6 +225,9 @@ pipeline {
                     docker rmi ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
                     """
             }
+            discordSend description: "${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} deployed successfully",
+                  title: "Success : Workinkorea-Server", 
+                  webhookURL: "${env.DISCORD_WEBHOOK_URL}"
             echo "old container : ${env.DOCKER_IMAGE_NAME}-${env.COLOR} stopped"
         }
         failure {
@@ -233,7 +238,7 @@ pipeline {
                     docker rm ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
                     docker rmi ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
                     """
-                sleep 10
+                sleep 5
                 sh """
                     docker rm ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
                     docker run -d \
@@ -269,6 +274,9 @@ pipeline {
                     ${env.DOCKER_IMAGE_NAME}-${env.COLOR}
                 """
             }
+            discordSend description: "${env.DOCKER_IMAGE_NAME}-${env.COLOR} rolled back",
+                  title: "Failure : Workinkorea-Server", 
+                  webhookURL: "${env.DISCORD_WEBHOOK_URL}"
             echo "Rolled back to ${env.COLOR} container"
         }
     }
