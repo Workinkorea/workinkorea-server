@@ -8,9 +8,6 @@ pipeline {
         DOCKER_IMAGE_NAME = "workinkorea-server"
         PORT = 8000
 
-        COLOR = "blue"
-        NEW_COLOR = "green"
-
         // 환경변수 .env 설정
         COOKIE_DOMAIN = credentials('cookie-domain')
         CLIENT_URL = credentials('client-url')
@@ -44,63 +41,47 @@ pipeline {
     }
 
     stages {
-        stage("Determine Colors") {
-            // 색상 결정
-            steps {
-                echo "Determining colors.."
-                script {
-
-                    def blueRuning = sh(
-                        script: "docker ps -q -f 'name=workinkorea-server-blue'",
-                        returnStdout: true
-                    ).trim()
-
-                    def greenRuning = sh(
-                        script: "docker ps -q -f 'name=workinkorea-server-green'",
-                        returnStdout: true
-                    ).trim()
-                    
-                    if (blueRuning) {
-                        env.COLOR = "blue"
-                        env.NEW_COLOR = "green"
-                    } else if (greenRuning) {
-                        env.COLOR = "green"
-                        env.NEW_COLOR = "blue"
-                    } else {
-                        // 처음 배포하는 경우
-                        env.COLOR = "none"
-                        env.NEW_COLOR = "blue"
-                    }
-
-                    echo "Color ${env.COLOR} and ${env.NEW_COLOR} determined"
-                }
-            }
-        }
         stage("Docker build") {
-            // 도커 이미지 빌드
+            // 기존 docker 중지 및 삭제
             steps {
                 echo "Building.."
                 script{
                     // clean up docker
                     sh "docker system prune -a -f"
-                    sh "docker build -f Dockerfile -t ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} ."
+                    
+                    sh """
+                    docker stop ${env.DOCKER_IMAGE_NAME} || true
+                    docker rm ${env.DOCKER_IMAGE_NAME} || true
+                    docker rmi ${env.DOCKER_IMAGE_NAME} || true
+                    """
+
+                    sh "docker build -f Dockerfile -t ${env.DOCKER_IMAGE_NAME} ."
                 }
                 echo "Docker build finished"
             }
         }
-        stage("Docker run") {
-            // 도커 실행
+        stage("Test") {
+            // 테스트 코드 실행
             steps {
-                echo "Running.."
+                echo "Testing.."
+                // 테스트 코드 추가 예정
+                echo "Test finished"
+            }
+        }
+        stage("Deploy") {
+            // 배포
+            steps {
+                echo "Deploying...."
                 script {
-                    sh """docker run -d \
-                        --name ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} \
+                    sh """
+                        docker run -d \
+                        --name workinkorea-server \
                         --network core_network \
-                        --label 'traefik.enable=false' \
-                        --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}.rule=Host(\"arw.${env.BASE_URL}\")' \
-                        --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}.entrypoints=websecure' \
-                        --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}.tls.certresolver=le' \
-                        --label 'traefik.http.services.${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}.loadbalancer.server.port=${env.PORT}' \
+                        --label 'traefik.enable=true' \
+                        --label 'traefik.http.routers.workinkorea-server.rule=Host(\"arw.${env.BASE_URL}\")' \
+                        --label 'traefik.http.routers.workinkorea-server.entrypoints=websecure' \
+                        --label 'traefik.http.routers.workinkorea-server.tls.certresolver=le' \
+                        --label 'traefik.http.services.workinkorea-server.loadbalancer.server.port=${env.PORT}' \
                         -e COOKIE_DOMAIN=${env.COOKIE_DOMAIN} \
                         -e CLIENT_URL=${env.CLIENT_URL} \
                         -e DATABASE_SYNC_URL=${env.DATABASE_SYNC_URL} \
@@ -123,92 +104,11 @@ pipeline {
                         -e MAIL_FROM=${env.MAIL_FROM} \
                         -e MAIL_PORT=${env.MAIL_PORT} \
                         -e MAIL_SERVER=${env.MAIL_SERVER} \
-                        ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
-                    """
+                        workinkorea-server
+                        """
                 }
-                echo "Docker run finished"
+                echo "Deploy finished"
             }
         }
-        stage("Docker health check and switch traefik") {
-            // 도커 헬스 체크 및 traefik 설정 스위치
-            steps {
-                echo "Health checking.."
-                script {        
-                    def healthCheck = sh(
-                        script: "docker inspect -f '{{.State.Running}}' ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}",
-                        returnStdout: true
-                    ).trim()
-
-                    if (healthCheck == "true") {
-                        script {
-                            sh """
-                                docker update \
-                                --label 'traefik.enable=true' \
-                                ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
-                            """
-
-                            sleep 10
-                             if (env.CURRENT_COLOR != "none") {
-                                sh """docker update \
-                                    --label 'traefik.enable=false' \
-                                    workinkorea-server-${env.COLOR}
-                                """
-                             }
-                        }
-                    } else {
-                        error "Health check failed : workinkorea-server-${env.NEW_COLOR} is not running"
-                    }
-                }
-                
-                echo "Health check finished"
-            }
-        }
-        stage("Traefik test") {
-            // traefik 설정 테스트
-            steps {
-                echo "Traefik test.."
-                script {
-                    
-                    def finalTest = sh(
-                            script: "curl -s -o /dev/null -w '%{http_code}' https://arw.${env.BASE_URL}/docs",
-                            returnStdout: true
-                        ).trim()
-                    
-                    if (finalTest != "200") {
-                        error("Traefik test failed. HTTP Status: ${finalTest}")
-                    }
-                    
-                }
-                echo "Traefik test passed. HTTP Status: ${finalTest}"
-            }
-        }    
-    }
-    post {
-        success {
-            script {
-                sh """
-                    docker stop ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
-                    docker rm ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
-                    docker rmi ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
-                    """
-            }
-            echo "old container : ${env.DOCKER_IMAGE_NAME}-${env.COLOR} stopped"
-        }
-        failure {
-            script {
-                sh """
-                    docker update --label 'traefik.enable=false' ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
-                    docker stop ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
-                    docker rm ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
-                    docker rmi ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
-                    """
-                sleep 10
-                sh """docker update \
-                    --label 'traefik.enable=true' \
-                    ${env.DOCKER_IMAGE_NAME}-${env.COLOR}
-                """
-            }
-        }
-            echo "Rolled back to ${env.COLOR} container"
     }
 }
