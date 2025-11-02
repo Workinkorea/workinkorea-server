@@ -8,9 +8,6 @@ pipeline {
         DOCKER_IMAGE_NAME = "workinkorea-server"
         PORT = 8000
 
-        COLOR = "blue"
-        NEW_COLOR = "green"
-
         // 환경변수 .env 설정
         COOKIE_DOMAIN = credentials('cookie-domain')
         CLIENT_URL = credentials('client-url')
@@ -50,20 +47,20 @@ pipeline {
                 echo "Determining colors.."
                 script {
 
-                    def blueRuning = sh(
+                    def blueRunning = sh(
                         script: "docker ps -q -f 'name=workinkorea-server-blue'",
                         returnStdout: true
                     ).trim()
 
-                    def greenRuning = sh(
+                    def greenRunning = sh(
                         script: "docker ps -q -f 'name=workinkorea-server-green'",
                         returnStdout: true
                     ).trim()
                     
-                    if (blueRuning) {
+                    if (blueRunning) {
                         env.COLOR = "blue"
                         env.NEW_COLOR = "green"
-                    } else if (greenRuning) {
+                    } else if (greenRunning) {
                         env.COLOR = "green"
                         env.NEW_COLOR = "blue"
                     } else {
@@ -82,7 +79,6 @@ pipeline {
                 echo "Building.."
                 script{
                     // clean up docker
-                    sh "docker system prune -a -f"
                     sh "docker build -f Dockerfile -t ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} ."
                 }
                 echo "Docker build finished"
@@ -142,17 +138,44 @@ pipeline {
                     if (healthCheck == "true") {
                         script {
                             sh """
-                                docker update \
+                            docker stop ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
+                            docker rm ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
+                            docker run -d \
+                                --name ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} \
+                                --network core_network \
                                 --label 'traefik.enable=true' \
+                                --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}.rule=Host(\"arw.${env.BASE_URL}\")' \
+                                --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}.entrypoints=websecure' \
+                                --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}.tls.certresolver=le' \
+                                --label 'traefik.http.services.${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}.loadbalancer.server.port=${env.PORT}' \
+                                -e COOKIE_DOMAIN=${env.COOKIE_DOMAIN} \
+                                -e CLIENT_URL=${env.CLIENT_URL} \
+                                -e DATABASE_SYNC_URL=${env.DATABASE_SYNC_URL} \
+                                -e DATABASE_ASYNC_URL=${env.DATABASE_ASYNC_URL} \
+                                -e REDIS_HOST=${env.REDIS_HOST} \
+                                -e REDIS_PORT=${env.REDIS_PORT} \
+                                -e REDIS_DB=${env.REDIS_DB} \
+                                -e GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID} \
+                                -e GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET} \
+                                -e GOOGLE_REDIRECT_URI=${env.GOOGLE_REDIRECT_URI} \
+                                -e GOOGLE_AUTHORIZATION_URL=${env.GOOGLE_AUTHORIZATION_URL} \
+                                -e GOOGLE_TOKEN_URL=${env.GOOGLE_TOKEN_URL} \
+                                -e GOOGLE_USER_INFO_URL=${env.GOOGLE_USER_INFO_URL} \
+                                -e JWT_SECRET=${env.JWT_SECRET} \
+                                -e JWT_ALGORITHM=${env.JWT_ALGORITHM} \
+                                -e ACCESS_TOKEN_EXPIRE_MINUTES=${env.ACCESS_TOKEN_EXPIRE_MINUTES} \
+                                -e REFRESH_TOKEN_EXPIRE_MINUTES=${env.REFRESH_TOKEN_EXPIRE_MINUTES} \
+                                -e MAIL_USERNAME=${env.MAIL_USERNAME} \
+                                -e MAIL_PASSWORD="${env.MAIL_PASSWORD}" \
+                                -e MAIL_FROM=${env.MAIL_FROM} \
+                                -e MAIL_PORT=${env.MAIL_PORT} \
+                                -e MAIL_SERVER=${env.MAIL_SERVER} \
                                 ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
                             """
 
                             sleep 10
-                             if (env.CURRENT_COLOR != "none") {
-                                sh """docker update \
-                                    --label 'traefik.enable=false' \
-                                    workinkorea-server-${env.COLOR}
-                                """
+                             if (env.COLOR != "none") {
+                                sh "docker stop ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true"
                              }
                         }
                     } else {
@@ -169,22 +192,30 @@ pipeline {
                 echo "Traefik test.."
                 script {
                     
-                    def finalTest = sh(
-                            script: "curl -s -o /dev/null -w '%{http_code}' https://arw.${env.BASE_URL}/docs",
-                            returnStdout: true
-                        ).trim()
+                    // def traefikTest = sh(
+                    //         script: "curl -s -o /dev/null -w '%{http_code}' https://arw.${env.BASE_URL}/docs",
+                    //         returnStdout: true
+                    //     ).trim()
                     
-                    if (finalTest != "200") {
-                        error("Traefik test failed. HTTP Status: ${finalTest}")
+                    // 개발 환경에서 테스트
+                    def traefikTest = sh(
+                        script: """docker run --rm --network core_network curlimages/curl:latest curl -s -o /dev/null -w '%{http_code}' -H 'Host: arw.${env.BASE_URL}' http://${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}:${env.PORT}/docs""",
+                        returnStdout: true
+                    ).trim()
+                    
+                    echo "Traefik test passed. HTTP Status: ${traefikTest}"
+                    if (traefikTest != "200") {
+                        error("Traefik test failed. HTTP Status: ${traefikTest}")
                     }
                     
                 }
-                echo "Traefik test passed. HTTP Status: ${finalTest}"
+                echo "Traefik test finished"
             }
         }    
     }
     post {
         success {
+            echo "success"
             script {
                 sh """
                     docker stop ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
@@ -195,16 +226,46 @@ pipeline {
             echo "old container : ${env.DOCKER_IMAGE_NAME}-${env.COLOR} stopped"
         }
         failure {
+            error "rollback to ${env.COLOR} container"
             script {
                 sh """
-                    docker update --label 'traefik.enable=false' ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
                     docker stop ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
                     docker rm ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
                     docker rmi ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
                     """
                 sleep 10
-                sh """docker update \
+                sh """
+                    docker rm ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
+                    docker run -d \
+                    --name ${env.DOCKER_IMAGE_NAME}-${env.COLOR} \
+                    --network core_network \
                     --label 'traefik.enable=true' \
+                    --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.rule=Host(\"arw.${env.BASE_URL}\")' \
+                    --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.entrypoints=websecure' \
+                    --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.tls.certresolver=le' \
+                    --label 'traefik.http.services.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.loadbalancer.server.port=${env.PORT}' \
+                    -e COOKIE_DOMAIN=${env.COOKIE_DOMAIN} \
+                    -e CLIENT_URL=${env.CLIENT_URL} \
+                    -e DATABASE_SYNC_URL=${env.DATABASE_SYNC_URL} \
+                    -e DATABASE_ASYNC_URL=${env.DATABASE_ASYNC_URL} \
+                    -e REDIS_HOST=${env.REDIS_HOST} \
+                    -e REDIS_PORT=${env.REDIS_PORT} \
+                    -e REDIS_DB=${env.REDIS_DB} \
+                    -e GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID} \
+                    -e GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET} \
+                    -e GOOGLE_REDIRECT_URI=${env.GOOGLE_REDIRECT_URI} \
+                    -e GOOGLE_AUTHORIZATION_URL=${env.GOOGLE_AUTHORIZATION_URL} \
+                    -e GOOGLE_TOKEN_URL=${env.GOOGLE_TOKEN_URL} \
+                    -e GOOGLE_USER_INFO_URL=${env.GOOGLE_USER_INFO_URL} \
+                    -e JWT_SECRET=${env.JWT_SECRET} \
+                    -e JWT_ALGORITHM=${env.JWT_ALGORITHM} \
+                    -e ACCESS_TOKEN_EXPIRE_MINUTES=${env.ACCESS_TOKEN_EXPIRE_MINUTES} \
+                    -e REFRESH_TOKEN_EXPIRE_MINUTES=${env.REFRESH_TOKEN_EXPIRE_MINUTES} \
+                    -e MAIL_USERNAME=${env.MAIL_USERNAME} \
+                    -e MAIL_PASSWORD="${env.MAIL_PASSWORD}" \
+                    -e MAIL_FROM=${env.MAIL_FROM} \
+                    -e MAIL_PORT=${env.MAIL_PORT} \
+                    -e MAIL_SERVER=${env.MAIL_SERVER} \
                     ${env.DOCKER_IMAGE_NAME}-${env.COLOR}
                 """
             }
@@ -212,3 +273,4 @@ pipeline {
         }
     }
 }
+
