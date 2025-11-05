@@ -16,6 +16,7 @@ pipeline {
 
         MAIL_USERNAME = credentials('mail-username')
         MAIL_PASSWORD = credentials('mail-password')
+        MAIL_FROM_NAME = credentials('mail-from-name')
         MAIL_FROM = credentials('mail-from')
         MAIL_PORT = credentials('mail-port')
         MAIL_SERVER = credentials('mail-server')
@@ -118,6 +119,7 @@ pipeline {
                         -e REFRESH_TOKEN_EXPIRE_MINUTES=${env.REFRESH_TOKEN_EXPIRE_MINUTES} \
                         -e MAIL_USERNAME=${env.MAIL_USERNAME} \
                         -e MAIL_PASSWORD="${env.MAIL_PASSWORD}" \
+                        -e MAIL_FROM_NAME="${env.MAIL_FROM_NAME}" \
                         -e MAIL_FROM=${env.MAIL_FROM} \
                         -e MAIL_PORT=${env.MAIL_PORT} \
                         -e MAIL_SERVER=${env.MAIL_SERVER} \
@@ -169,6 +171,7 @@ pipeline {
                                 -e REFRESH_TOKEN_EXPIRE_MINUTES=${env.REFRESH_TOKEN_EXPIRE_MINUTES} \
                                 -e MAIL_USERNAME=${env.MAIL_USERNAME} \
                                 -e MAIL_PASSWORD="${env.MAIL_PASSWORD}" \
+                                -e MAIL_FROM_NAME="${env.MAIL_FROM_NAME}" \
                                 -e MAIL_FROM=${env.MAIL_FROM} \
                                 -e MAIL_PORT=${env.MAIL_PORT} \
                                 -e MAIL_SERVER=${env.MAIL_SERVER} \
@@ -268,6 +271,7 @@ pipeline {
                     -e REFRESH_TOKEN_EXPIRE_MINUTES=${env.REFRESH_TOKEN_EXPIRE_MINUTES} \
                     -e MAIL_USERNAME=${env.MAIL_USERNAME} \
                     -e MAIL_PASSWORD="${env.MAIL_PASSWORD}" \
+                    -e MAIL_FROM_NAME="${env.MAIL_FROM_NAME}" \
                     -e MAIL_FROM=${env.MAIL_FROM} \
                     -e MAIL_PORT=${env.MAIL_PORT} \
                     -e MAIL_SERVER=${env.MAIL_SERVER} \
