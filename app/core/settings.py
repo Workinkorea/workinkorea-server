@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     # 이메일 설정
     MAIL_USERNAME: Optional[str] = None
     MAIL_PASSWORD: Optional[str] = None
+    MAIL_FROM_NAME: Optional[str] = None
     MAIL_FROM: Optional[str] = None
     MAIL_PORT: Optional[int] = None
     MAIL_SERVER: Optional[str] = None
