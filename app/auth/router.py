@@ -194,10 +194,12 @@ async def signup(
 
         user_info_data['country_id'] = country.id
         user, profile = await auth_service.create_user_by_social(user_info_data)
-        if not user or not profile:
-            # user 생성 실패
+        # user 생성 실패
+        if not user:
             return JSONResponse(content={"error": "failed to create user"}, status_code=500)
-    
+        if not profile:
+            return JSONResponse(content={"error": "failed to create profile"}, status_code=500)
+        
         return JSONResponse(content={"url": f"{SETTINGS.CLIENT_URL}/login"}, status_code=201)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
@@ -231,6 +233,7 @@ async def logout(request: Request, auth_redis_service: AuthRedisService = Depend
 @router.post("/refresh")
 async def refresh(request: Request, 
     auth_service: AuthService = Depends(get_auth_service), 
+    company_service: CompanyService = Depends(get_company_service),
     auth_redis_service: AuthRedisService = Depends(get_auth_redis_service)
 ):
     """
@@ -258,7 +261,16 @@ async def refresh(request: Request,
         await auth_redis_service.set_refresh_token(refresh_token, email) # 10 days
         
         # jwt token 생성
-        access_token = await auth_service.create_access_token(user_email)
+        if payload.get("type") == "access":
+            access_token = await auth_service.create_access_token(user_email)
+        elif payload.get("type") == "access_company":
+            company_id = payload.get("company_id")
+            if not company_id:
+                return JSONResponse(content={"message": "Company ID not found"}, status_code=401)
+            access_token = await company_service.create_access_company_token(user_email, int(company_id))
+        else:
+            return JSONResponse(content={"message": "Invalid access token"}, status_code=401)
+        
         if not access_token:
             return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
         
@@ -363,7 +375,6 @@ async def company_signup(request: CompanySignupRequest,
 @router.post("/company/login")
 async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
     company_service: CompanyService = Depends(get_company_service),
-    auth_service: AuthService = Depends(get_auth_service),
     auth_redis_service: AuthRedisService = Depends(get_auth_redis_service)
 ):
     """
@@ -374,29 +385,28 @@ async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
             "email": form_data.username,
             "password": form_data.password
         }
-        
         company_user = await company_service.company_user_login(company_data)
-        if not company_user:
-            return JSONResponse(content={"error": "Company user not found"}, status_code=401)
+        if company_user is None:
+            return JSONResponse(content={"error": "Company user not found"}, status_code=400)
 
-        access_token = await auth_service.create_access_token(company_user.email)
-        refresh_token = await auth_service.create_refresh_token(company_user.email)
+        access_company_token = await company_service.create_access_company_token(company_user.email, company_user.company_id)
+        refresh_company_token = await company_service.create_refresh_company_token(company_user.email, company_user.company_id)
 
-        refresh_token_redis = await auth_redis_service.set_refresh_token(refresh_token, company_user.email)
-        if not refresh_token_redis:
-            return JSONResponse(content={"error": "Failed to set refresh token"}, status_code=500)
+        refresh_company_token_redis = await auth_redis_service.set_refresh_token(refresh_company_token, company_user.email)
+        if not refresh_company_token_redis:
+            return JSONResponse(content={"error": "Failed to set refresh company token"}, status_code=500)
 
         status_massage_dict = {
             "user_id": company_user.id,
             "company_id": company_user.company_id,
-            "token": access_token,
+            "token": access_company_token,
         }
 
         url = f"{SETTINGS.CLIENT_URL}/company?{urlencode(status_massage_dict)}"
         response = JSONResponse(content={"url": url})
         response.set_cookie(
             key="refresh_token",
-            value=refresh_token,
+            value=refresh_company_token,
             httponly=True,
             secure=False,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
