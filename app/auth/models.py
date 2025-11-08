@@ -26,6 +26,12 @@ class Company(Base):
     company_name: Mapped[str] = mapped_column(String, index=True)
 
     company_users: Mapped[list["CompanyUser"]] = relationship("CompanyUser", back_populates="company")
+    company_profile: Mapped["CompanyProfile"] = relationship(
+        "CompanyProfile", 
+        back_populates="company",
+        uselist=False, 
+        cascade="all, delete-orphan"
+        )
 
 
 class CompanyUser(Base):
