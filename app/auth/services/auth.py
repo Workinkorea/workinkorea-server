@@ -15,7 +15,7 @@ from app.profile.repositories.profile import ProfileRepository
 from app.profile.models.profile import Profile
 from app.auth.models import User
 from fastapi import Request
-from fastapi.responses import JSONResponse
+from fastapi import HTTPException
 
 class AuthService:
     def __init__(self, session: AsyncSession):
@@ -91,14 +91,14 @@ class AuthService:
         except Exception as e:
             raise e
 
-    async def get_current_user(request: Request):
+    async def get_current_user(self, request: Request) -> User | None:
         """
         get current user
         """
         access_token = request.cookies.get("access_token")
 
         if not access_token:
-            return JSONResponse(content={"message": "Not authenticated"}, status_code=401)
+            raise HTTPException(status_code=401, detail="Not authenticated")
 
         try:
             # jwt token 검증 이메일 반환
@@ -107,14 +107,14 @@ class AuthService:
 
             email = payload.get("sub")
             if not email:
-                return JSONResponse(content={"message": "Invalid token"}, status_code=401)
+                raise HTTPException(status_code=401, detail="Invalid token")
             return email
         except jwt.ExpiredSignatureError:
-            return JSONResponse(content={"message": "Access token expired"}, status_code=401)
+            raise HTTPException(status_code=401, detail="Access token expired")
         except Exception as e:
-            return JSONResponse(content={"message": "Invalid token"}, status_code=401)
+            raise HTTPException(status_code=401, detail="Invalid token")
 
-    async def create_user_by_social(self, user_info_data: dict) -> tuple[User, Profile] | JSONResponse:
+    async def create_user_by_social(self, user_info_data: dict) -> tuple[User, Profile] | None:
         """
         create user by social
         args:
@@ -122,12 +122,13 @@ class AuthService:
         """
         user = await self.auth_repository.create_user_by_social(user_info_data)
         if not user:
-            return JSONResponse(content={"error": "failed to create user"}, status_code=500)
+            return None
         
+        # profile 생성
         user_info_data['user_id'] = user.id
         profile = await self.profile_repository.create_profile(user_info_data)
         if not profile:
-            return JSONResponse(content={"error": "failed to create profile"}, status_code=500)
+            return None
         
         return user, profile
 
