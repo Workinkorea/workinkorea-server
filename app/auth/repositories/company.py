@@ -71,3 +71,16 @@ class CompanyRepository:
             return result.scalar_one()
         except Exception as e:
             raise e
+
+    async def get_company_by_company_id(self, company_id: int) -> Company | None:
+        """
+        get company by company id
+        args:
+            company_id: int
+        """
+        try:
+            stmt = select(Company).where(Company.id == company_id)
+            result = await self.session.execute(stmt)
+            return result.scalar_one_or_none()
+        except Exception as e:
+            raise e
