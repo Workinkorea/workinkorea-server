@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi import Request
+from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.settings import SETTINGS
 from urllib.parse import urlencode
@@ -359,7 +360,7 @@ async def company_signup(request: CompanySignupRequest,
 
 
 @router.post("/company/login")
-async def company_login(request: CompanyLoginRequest,
+async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
     company_service: CompanyService = Depends(get_company_service),
     auth_service: AuthService = Depends(get_auth_service),
     auth_redis_service: AuthRedisService = Depends(get_auth_redis_service)
@@ -368,16 +369,14 @@ async def company_login(request: CompanyLoginRequest,
     company login
     """
     try:
-        company_data = request.model_dump()
-        if not company_data['email']:
-            return JSONResponse(content={"error": "Email is required"}, status_code=400)
-
-        if not company_data['password']:
-            return JSONResponse(content={"error": "Password is required"}, status_code=400)
+        company_data = {
+            "email": form_data.username,
+            "password": form_data.password
+        }
         
         company_user = await company_service.company_user_login(company_data)
         if not company_user:
-            return JSONResponse(content={"error": "Company user not found"}, status_code=404)
+            return JSONResponse(content={"error": "Company user not found"}, status_code=401)
 
         access_token = await auth_service.create_access_token(company_user.email)
         refresh_token = await auth_service.create_refresh_token(company_user.email)
