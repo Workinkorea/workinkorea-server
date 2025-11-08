@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
-
+import datetime
 
 class UpdateProfileRequest(BaseModel):
     profile_image_url: Optional[str] = None
@@ -36,3 +36,19 @@ class UpdateAccountConfigRequest(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SelectCompanyIdRequest(BaseModel):
+    company_id: int
+
+class CompanyProfileRequest(BaseModel):
+    industry_type: str
+    employee_count: int
+    establishment_date: datetime.date
+    company_type: str
+    insurance: str
+    phone_number: int
+    address: str
+    website_url: str
+    email: str
+

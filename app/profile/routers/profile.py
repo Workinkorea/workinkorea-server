@@ -29,7 +29,7 @@ def get_auth_service(session: AsyncSession = Depends(get_async_session)):
     return AuthService(session)
 
 
-@router.get("/profile")
+@router.get("")
 async def get_profile(
     request: Request,
     auth_service: AuthService = Depends(get_auth_service),
@@ -55,7 +55,7 @@ async def get_profile(
     )
 
 
-@router.put("/profile")
+@router.put("")
 async def update_profile(
     request: UpdateProfileRequest,
     data: UpdateProfileRequest,

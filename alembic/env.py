@@ -15,6 +15,7 @@ from app.profile.models.contact import *
 from app.profile.models.position import *
 from app.profile.models.country import *
 from app.profile.models.account_config import *
+from app.profile.models.company_profile import *
 
 
 # alembic 설정
