@@ -29,7 +29,7 @@ def get_auth_service(session: AsyncSession = Depends(get_async_session)):
     return AuthService(session)
 
 
-@router.get("/contact")
+@router.get("")
 async def get_contact(
     request: Request,
     auth_service: AuthService = Depends(get_auth_service),
