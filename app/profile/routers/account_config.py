@@ -14,7 +14,7 @@ from app.profile.services.account_config import AccountConfigService
  
 
 router = APIRouter(
-    prefix="/account-config",
+    prefix="/profile/account-config",
     tags=["account-config"]
     # dependencies=[Depends(get_token_header)],
     # responses={404: {"description": "Not found"}}

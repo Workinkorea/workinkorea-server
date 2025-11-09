@@ -12,7 +12,7 @@ from app.auth.services.company import CompanyService
 from app.auth.models import Company, CompanyUser
 
 router = APIRouter(
-    prefix='/company',
+    prefix='/profile/company',
     tags=["company-profile"]
 )
 

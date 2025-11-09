@@ -14,7 +14,7 @@ from app.profile.services.contact import ContactService
 
 
 router = APIRouter(
-    prefix="/contact",
+    prefix="/profile/contact",
     tags=["contact"]
     # dependencies=[Depends(get_token_header)],
     # responses={404: {"description": "Not found"}}
