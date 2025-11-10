@@ -1,28 +1,35 @@
-# app/auth/service.py
-from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from app.core.settings import SETTINGS
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from pathlib import Path
+# python
+import jwt
 import random
 import datetime
-import jwt
+from pathlib import Path
 
+# app/core
+from app.core.settings import SETTINGS
+
+# app/auth
+from app.auth.models import User
+from app.auth.schemas.user import UserDTO
 from app.auth.repositories.auth import AuthRepository
 
-from app.profile.repositories.profile import ProfileRepository
-from app.profile.repositories.contact import ContactRepository
-from app.profile.repositories.account_config import AccountConfigRepository
-from app.profile.models.profile import Profile
-from app.auth.models import User
+# app/profile
 from app.profile.models.contact import Contact
-from app.profile.models.account_config import AccountConfig
-from fastapi.responses import JSONResponse
+from app.profile.models.profile import Profile
 from app.profile.schemas.profile import ProfileDTO
 from app.profile.schemas.contact import ContactDTO
+from app.profile.models.account_config import AccountConfig
+from app.profile.repositories.profile import ProfileRepository
+from app.profile.repositories.contact import ContactRepository
 from app.profile.schemas.account_config import AccountConfigDTO
-from app.auth.schemas.user import UserDTO
+from app.profile.repositories.account_config import AccountConfigRepository
+
+# sqlalchemy
+from sqlalchemy.ext.asyncio import AsyncSession
+
+# fastapi
+from fastapi.responses import JSONResponse
+from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+
 
 class AuthService:
     def __init__(self, session: AsyncSession):
@@ -128,7 +135,10 @@ class AuthService:
     #     except Exception as e:
     #         return JSONResponse(content={"message": "Invalid token"}, status_code=401)
 
-    async def create_user_by_social(self, user_info_data: dict) -> tuple[UserDTO, ProfileDTO, ContactDTO, AccountConfigDTO] | JSONResponse:
+    async def create_user_by_social(
+        self,
+        user_info_data: dict
+    ) -> tuple[UserDTO, ProfileDTO, ContactDTO, AccountConfigDTO] | JSONResponse:
         """
         create user by social
         args:
@@ -136,8 +146,9 @@ class AuthService:
         """
         user: User = await self.auth_repository.create_user_by_social(user_info_data)
         if not user:
-            return JSONResponse(content={"error": "failed to create user"}, status_code=500)
+            return None
         
+        # profile 생성
         user_info_data['user_id'] = user.id
         profile: Profile = await self.profile_repository.create_profile(user_info_data)
         if not profile:
