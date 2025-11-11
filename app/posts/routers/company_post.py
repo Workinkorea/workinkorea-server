@@ -13,7 +13,7 @@ from app.posts.schemas.request import CompanyPostRequest
 from app.posts.schemas.response import CompanyPostResponse
 
 router = APIRouter(
-    prefix="/posts/company",
+    prefix="/company",
     tags=["company-post"]
 )
 
