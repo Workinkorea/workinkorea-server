@@ -14,3 +14,4 @@ class Position(Base):
     lv4_name: Mapped[Optional[str]] = mapped_column(String, index=True, nullable=True)
 
     profiles: Mapped[list["Profile"]] = relationship("Profile", back_populates="position")
+    company_posts: Mapped[list["CompanyPost"]] = relationship("CompanyPost", back_populates="position")
