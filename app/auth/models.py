@@ -32,6 +32,11 @@ class Company(Base):
         uselist=False, 
         cascade="all, delete-orphan"
         )
+    company_posts: Mapped[list["CompanyPost"]] = relationship(
+        "CompanyPost",
+        back_populates="company",
+        cascade="all, delete-orphan"
+        )
 
 
 class CompanyUser(Base):

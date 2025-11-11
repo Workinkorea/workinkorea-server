@@ -16,7 +16,7 @@ from app.profile.models.position import *
 from app.profile.models.country import *
 from app.profile.models.account_config import *
 from app.profile.models.company_profile import *
-
+from app.posts.models.company_post import *
 
 # alembic 설정
 config = context.config
