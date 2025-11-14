@@ -14,7 +14,7 @@ class CompanyService:
         self.session = session
         self.company_repository = CompanyRepository(session)
 
-    async def get_company_by_company_number(self, company_number: int) -> Company | None:
+    async def get_company_by_company_number(self, company_number: str) -> Company | None:
         """
         get company by company number
         args:

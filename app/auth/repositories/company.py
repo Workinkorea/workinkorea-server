@@ -9,11 +9,11 @@ class CompanyRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_company_by_company_number(self, company_number: int) -> Company | None:
+    async def get_company_by_company_number(self, company_number: str) -> Company | None:
         """
         get company by company number
         args:
-            company_number: int
+            company_number: str
         """
         try:
             stmt = select(Company).where(Company.company_number == company_number)
