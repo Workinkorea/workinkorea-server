@@ -18,7 +18,7 @@ class CompanyProfile(Base):
     establishment_date: Mapped[datetime.date] = mapped_column(Date, index=True) # 설립일
     company_type: Mapped[str] = mapped_column(String, index=True) # 주식회사, 유한회사 등
     insurance: Mapped[str] = mapped_column(String, index=True) # 4대 보험
-    phone_number: Mapped[int] = mapped_column(BigInteger, index=True) # 대표전화번호
+    phone_number: Mapped[int] = mapped_column(String, index=True) # 대표전화번호
     address: Mapped[str] = mapped_column(String, index=True) # 주소
     website_url: Mapped[str] = mapped_column(String, index=True) # 홈페이지 주소
     email: Mapped[str] = mapped_column(String, index=True) # 대표 이메일
