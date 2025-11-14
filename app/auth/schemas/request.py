@@ -18,12 +18,12 @@ class EmailCertifyVerifyRequest(BaseModel):
     code: str
 
 class CompanySignupRequest(BaseModel):
-    company_number: int
+    company_number: str
     company_name: str
     email: str
     password: str
     name: str
-    phone: int
+    phone: str
 
 class CompanyLoginRequest(BaseModel):
     email: str
