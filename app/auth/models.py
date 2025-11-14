@@ -2,7 +2,7 @@
 import datetime
 from app.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, ForeignKey, Boolean, BigInteger
+from sqlalchemy import Integer, String, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import JSONB
 
 
@@ -22,7 +22,7 @@ class User(Base):
 class Company(Base):
     __tablename__ = "companies"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    company_number: Mapped[int] = mapped_column(BigInteger, index=True, unique=True)
+    company_number: Mapped[str] = mapped_column(String, index=True, unique=True)
     company_name: Mapped[str] = mapped_column(String, index=True)
 
     company_users: Mapped[list["CompanyUser"]] = relationship("CompanyUser", back_populates="company")
@@ -48,6 +48,6 @@ class CompanyUser(Base):
     password: Mapped[str] = mapped_column(String, index=True)
 
     name: Mapped[str] = mapped_column(String, index=True)
-    phone: Mapped[int] = mapped_column(BigInteger, index=True)
+    phone: Mapped[str] = mapped_column(String, index=True)
 
     company: Mapped["Company"] = relationship("Company", back_populates="company_users")
