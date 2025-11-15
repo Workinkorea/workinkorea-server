@@ -6,13 +6,13 @@ import datetime
 class ProfileDTO(BaseModel):
     user_id: int
     profile_image_url: Optional[str] = None
-    location: str
+    location: str = None
     introduction: Optional[str] = None
 
     address: Optional[str] = None # 상세 주소
 
-    position_id: int
-    job_status: str
+    position_id: int = None
+    job_status: str = None
     portfolio_url: Optional[str] = None
 
     birth_date: datetime.date

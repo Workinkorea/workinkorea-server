@@ -1,6 +1,8 @@
 from sqlalchemy import select, delete, insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
 import datetime
+from sqlalchemy.orm import selectinload
+
 from app.auth.models import User
 from app.core.settings import SETTINGS
 
@@ -32,7 +34,6 @@ class AuthRepository:
         args:
             email: str
         """
-        from sqlalchemy.orm import selectinload
         try:
             stmt = select(User).options(selectinload(User.profile)).where(User.email == email)
             result = await self.session.execute(stmt)
