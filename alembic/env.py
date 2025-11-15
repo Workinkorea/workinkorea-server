@@ -18,6 +18,13 @@ from app.profile.models.account_config import *
 from app.profile.models.company_profile import *
 from app.posts.models.company_post import *
 
+from app.posts.models.resume import *
+from app.posts.models.language_skill import *
+from app.posts.models.school import *
+from app.posts.models.career_history import *
+from app.posts.models.introduction import *
+from app.posts.models.license import *
+
 # alembic 설정
 config = context.config
 

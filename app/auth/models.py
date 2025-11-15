@@ -18,6 +18,11 @@ class User(Base):
         uselist=False,
         cascade="all, delete-orphan"
     )
+    resumes: Mapped[list["Resume"]] = relationship(
+        "Resume", 
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
 class Company(Base):
     __tablename__ = "companies"
