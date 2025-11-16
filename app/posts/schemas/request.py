@@ -5,7 +5,7 @@ from typing import Optional
 class CompanyPostRequest(BaseModel):
     title: str
     content: str
-    work_experience: int
+    work_experience: str
     position_id: int
     education: str
     language: str

@@ -127,10 +127,12 @@ async def delete_company_post(
     try:
         company = await company_service.get_current_company(request)
         if not company:
-            return JSONResponse(content={"error": "Company not found"}, status_code=404)
+            raise ValueError("Company not found")
         deleted = await company_post_service.delete_company_post(company_post_id)
         if not deleted:
-            return JSONResponse(content={"error": "Failed to delete company post"}, status_code=400)
+            raise ValueError("Failed to delete company post")
         return JSONResponse(content={"message": "Company post deleted"}, status_code=200)
+    except ValueError as e:
+        return JSONResponse(content={"error": str(e)}, status_code=404)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)

@@ -109,8 +109,5 @@ class ResumeService:
         resume = await self.resume_repository.get_resume_by_resume_id(resume_id)
         if not resume:
             raise ValueError("Resume not found")
-        
-        result = await self.resume_repository.delete_resume(resume)
-        if not result:
-            raise ValueError("Failed to delete resume")
-        return result
+
+        return await self.resume_repository.delete_resume(resume)

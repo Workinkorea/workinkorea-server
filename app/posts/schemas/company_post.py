@@ -6,7 +6,7 @@ class CompanyPostDTO(BaseModel):
     company_id: int
     title: str
     content: str
-    work_experience: int
+    work_experience: str
     position_id: int
     education: str
     language: str
