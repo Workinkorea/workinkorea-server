@@ -78,7 +78,4 @@ class CompanyPostService:
         args:
             company_post_id: int
         """
-        deleted = await self.company_post_repository.delete_company_post(company_post_id)
-        if not deleted:
-            raise ValueError("Failed to delete company post")
-        return True
+        return await self.company_post_repository.delete_company_post(company_post_id)

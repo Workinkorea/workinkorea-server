@@ -66,8 +66,12 @@ class CompanyPostRepository:
             company_post_id: int
         """
         try:
-            stmt = delete(CompanyPost).where(CompanyPost.id == company_post_id)
-            result = await self.session.execute(stmt)
-            return result.rowcount > 0
+            company_post = await self.get_company_post_by_company_post_id(company_post_id)
+            if not company_post:
+                raise ValueError("Company post not found")
+            
+            await self.session.delete(company_post)
+            await self.session.commit()
+            return True
         except Exception as e:
             raise e
