@@ -102,7 +102,9 @@ async def delete_resume(
     delete resume
     """
     try:
-        resume_id = await resume_service.delete_resume(resume_id)
+        deleted = await resume_service.delete_resume(resume_id)
+        if not deleted:
+            raise ValueError("Failed to delete resume")
         return JSONResponse(content={"message": "Resume deleted successfully"}, status_code=200)
     except ValueError as e:
         return JSONResponse(content={"error": str(e)}, status_code=404)
