@@ -10,7 +10,7 @@ class CompanyPost(Base):
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
     title: Mapped[str] = mapped_column(String, index=True)
     content: Mapped[str] = mapped_column(String, index=True)
-    work_experience: Mapped[int] = mapped_column(Integer, index=True)
+    work_experience: Mapped[str] = mapped_column(String, index=True)
     position_id: Mapped[int] = mapped_column(ForeignKey("positions.id"), index=True)
     education: Mapped[str] = mapped_column(String, index=True)
     language: Mapped[str] = mapped_column(String, index=True)
