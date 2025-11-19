@@ -25,6 +25,8 @@ from app.posts.models.career_history import *
 from app.posts.models.introduction import *
 from app.posts.models.license import *
 
+from app.diagnosis.models.diagnosis_answer import *
+
 # alembic 설정
 config = context.config
 
