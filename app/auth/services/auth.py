@@ -3,6 +3,7 @@ import jwt
 import random
 import datetime
 from pathlib import Path
+from typing import Optional
 
 # app/core
 from app.core.settings import SETTINGS
@@ -27,7 +28,6 @@ from app.profile.repositories.account_config import AccountConfigRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # fastapi
-from fastapi.responses import JSONResponse
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 
 
@@ -138,23 +138,23 @@ class AuthService:
     async def create_user_by_social(
         self,
         user_info_data: dict
-    ) -> tuple[UserDTO, ProfileDTO, ContactDTO, AccountConfigDTO] | JSONResponse:
+    ) -> tuple[UserDTO, ProfileDTO, ContactDTO, AccountConfigDTO] :
         """
         create user by social
         args:
             user_info_data: dict
         """
-        user: User = await self.auth_repository.create_user_by_social(user_info_data)
+        user: Optional[User] = await self.auth_repository.create_user_by_social(user_info_data)
         if not user:
-            return None
+            raise ValueError("failed to create user")
         
         # profile 생성
         user_info_data['user_id'] = user.id
-        profile: Profile = await self.profile_repository.create_profile(user_info_data)
+        profile: Optional[Profile] = await self.profile_repository.create_profile(user_info_data)
         if not profile:
-            return JSONResponse(content={"error": "failed to create profile"}, status_code=500)
+            raise ValueError("failed to create profile")
 
-        contact: Contact = await self.contact_repository.create_contact(
+        contact: Optional[Contact] = await self.contact_repository.create_contact(
             profile.user_id, {
                 'phone_number': None,
                 'github_url': None,
@@ -162,15 +162,15 @@ class AuthService:
                 'website_url': None,
             })
         if not contact:
-            return JSONResponse(content={"error": "failed to create contact"}, status_code=500)
+            raise ValueError("failed to create contact")
 
-        account_config: AccountConfig = await self.account_config_repository.create_account_config(
+        account_config: Optional[AccountConfig] = await self.account_config_repository.create_account_config(
             profile.user_id, {
                 'sns_message_notice': True,
                 'email_notice': True,
             })
         if not account_config:
-            return JSONResponse(content={"error": "failed to create account config"}, status_code=500)
+            raise ValueError("failed to create account config")
         
         return UserDTO.model_validate(user), ProfileDTO.model_validate(profile), ContactDTO.model_validate(contact), AccountConfigDTO.model_validate(account_config)
 

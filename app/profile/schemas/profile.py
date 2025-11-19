@@ -6,13 +6,13 @@ import datetime
 class ProfileDTO(BaseModel):
     user_id: int
     profile_image_url: Optional[str] = None
-    location: str = None
+    location: Optional[str] = None
     introduction: Optional[str] = None
 
     address: Optional[str] = None # 상세 주소
 
-    position_id: int = None
-    job_status: str = None
+    position_id: Optional[int] = None
+    job_status: Optional[str] = None
     portfolio_url: Optional[str] = None
 
     birth_date: datetime.date
@@ -26,12 +26,12 @@ class ProfileDTO(BaseModel):
 class UpdateProfileRequest(BaseModel):
     user_id: int
     profile_image_url: Optional[str] = None
-    location: str # 현재 거주중인 도시/위치 등
+    location: Optional[str] = None # 현재 거주중인 도시/위치 등
     introduction: Optional[str] = None
     address: Optional[str] = None # 상세 주소
     
-    position_id: int = None
-    job_status: str = None
+    position_id: Optional[int] = None
+    job_status: Optional[str] = None
     portfolio_url: Optional[str] = None
 
     # 생일과 이름은 바꿀 수 없음.
@@ -46,12 +46,12 @@ class UpdateProfileRequest(BaseModel):
 class ProfileResponse(BaseModel):
     user_id: int
     profile_image_url: Optional[str] = None
-    location: str
+    location: Optional[str] = None
     introduction: Optional[str] = None
     address: Optional[str] = None
 
-    position_id: int
-    job_status: str
+    position_id: Optional[int] = None
+    job_status: Optional[str] = None
     portfolio_url: Optional[str] = None
 
     birth_date: datetime.date

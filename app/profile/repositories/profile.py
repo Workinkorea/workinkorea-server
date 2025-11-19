@@ -7,7 +7,7 @@ class ProfileRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
  
-    async def create_profile(self, user_data: dict) -> Profile:
+    async def create_profile(self, user_data: dict) -> Profile | None:
         """
         create basic profile
         args:
@@ -22,7 +22,7 @@ class ProfileRepository:
             ).returning(Profile)
             result = await self.session.execute(stmt)
             await self.session.commit()
-            return result.scalar_one()
+            return result.scalar_one_or_none()
         except Exception as e:
             raise e
 

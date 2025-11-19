@@ -20,7 +20,7 @@ class ContactRepository:
         except Exception as e:
             raise e
 
-    async def create_contact(self, user_id: int, contact_data: dict) -> Contact:
+    async def create_contact(self, user_id: int, contact_data: dict) -> Contact | None:
         """
         create contact
         args:
@@ -30,7 +30,7 @@ class ContactRepository:
         try:
             stmt = insert(Contact).values(user_id=user_id, **contact_data).returning(Contact)
             result = await self.session.execute(stmt)
-            return result.scalar_one()
+            return result.scalar_one_or_none()
         except Exception as e:
             raise e
         

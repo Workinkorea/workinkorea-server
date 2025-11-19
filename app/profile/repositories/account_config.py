@@ -20,7 +20,7 @@ class AccountConfigRepository:
         except Exception as e:
             raise e
         
-    async def create_account_config(self, user_id: int, account_config_data: dict) -> AccountConfig:
+    async def create_account_config(self, user_id: int, account_config_data: dict) -> AccountConfig | None:
         """
         create account config
         args:
@@ -35,7 +35,7 @@ class AccountConfigRepository:
             ).returning(AccountConfig)
             result = await self.session.execute(stmt)
             await self.session.commit()
-            return result.scalar_one()
+            return result.scalar_one_or_none()
         except Exception as e:
             raise e
         
