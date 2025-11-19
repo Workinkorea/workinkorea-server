@@ -4,7 +4,7 @@ from typing import Optional
 
 class ContactDTO(BaseModel):
     user_id: int
-    phone_number: str
+    phone_number: Optional[str] = None
     github_url: Optional[str] = None
     linkedin_url: Optional[str] = None
     website_url: Optional[str] = None
@@ -15,7 +15,7 @@ class ContactDTO(BaseModel):
 
 class UpdateContactRequest(BaseModel):
     user_id: int
-    phone_number: str
+    phone_number: Optional[str] = None
     github_url: Optional[str] = None
     linkedin_url: Optional[str] = None
     website_url: Optional[str] = None
@@ -26,7 +26,7 @@ class UpdateContactRequest(BaseModel):
 
 class ContactResponse(BaseModel):
     user_id: int
-    phone_number: str
+    phone_number: Optional[str] = None
     github_url: Optional[str] = None
     linkedin_url: Optional[str] = None
     website_url: Optional[str] = None
