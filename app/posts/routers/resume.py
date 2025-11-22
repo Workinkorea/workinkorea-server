@@ -38,13 +38,14 @@ async def get_resume_list_by_user_id(
 @router.get("/{resume_id}")
 async def get_resume_by_user_id(
     resume_id: int,
-    resume_service: ResumeService = Depends(get_resume_service)
+    resume_service: ResumeService = Depends(get_resume_service),
+    user: User = Depends(get_current_user)
 ):
     """
     get resume by user id
     """
     try:
-        resume = await resume_service.get_resume_by_resume_id(resume_id)
+        resume = await resume_service.get_resume_by_resume_id(resume_id, user.id)
         return JSONResponse(content={"resume": resume}, status_code=200)
     except ValueError as e:
         return JSONResponse(content={"error": str(e)}, status_code=404)
@@ -86,7 +87,7 @@ async def update_resume(
     try:
         resume_data = request.model_dump()
         resume_data["id"] = resume_id
-        resume_id = await resume_service.update_resume(resume_data)
+        resume_id = await resume_service.update_resume(resume_data, user.id)
         return JSONResponse(content={"resume_id": resume_id}, status_code=200)
     except ValueError as e:
         return JSONResponse(content={"error": str(e)}, status_code=404)
@@ -96,13 +97,14 @@ async def update_resume(
 @router.delete("/{resume_id}")
 async def delete_resume(
     resume_id: int,
-    resume_service: ResumeService = Depends(get_resume_service)
+    resume_service: ResumeService = Depends(get_resume_service),
+    user: User = Depends(get_current_user)
 ):
     """
     delete resume
     """
     try:
-        deleted = await resume_service.delete_resume(resume_id)
+        deleted = await resume_service.delete_resume(resume_id, user.id)
         if not deleted:
             raise ValueError("Failed to delete resume")
         return JSONResponse(content={"message": "Resume deleted successfully"}, status_code=200)
