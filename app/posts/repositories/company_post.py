@@ -59,17 +59,13 @@ class CompanyPostRepository:
         except Exception as e:
             raise e
 
-    async def delete_company_post(self, company_post_id: int) -> bool:
+    async def delete_company_post(self, company_post: CompanyPost) -> bool:
         """
         delete company post
         args:
-            company_post_id: int
+            company_post: CompanyPost
         """
         try:
-            company_post = await self.get_company_post_by_company_post_id(company_post_id)
-            if not company_post:
-                raise ValueError("Company post not found")
-            
             await self.session.delete(company_post)
             await self.session.commit()
             return True

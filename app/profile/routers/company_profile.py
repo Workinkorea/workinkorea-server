@@ -6,7 +6,10 @@ from fastapi.responses import JSONResponse
 from app.profile.services.company_profile import CompanyProfileService
 from app.profile.schemas.company_profile import CompanyProfileResponse
 from app.profile.schemas.company_profile import CompanyProfileRequest
+
 from app.auth.services.company import CompanyService
+from app.auth.dependencies import get_current_company_user
+from app.auth.models import Company
 
 router = APIRouter(
     prefix='/company-profile',
@@ -21,17 +24,13 @@ def get_company_service(session: AsyncSession = Depends(get_async_session)):
 
 @router.get("")
 async def get_company_profile(
-    request: Request,
-    company_profile_service: CompanyProfileService = Depends(get_company_profile_service),
-    company_service: CompanyService = Depends(get_company_service)
+    company: Company = Depends(get_current_company_user),
+    company_profile_service: CompanyProfileService = Depends(get_company_profile_service)
 ) -> CompanyProfileResponse:
     """
     get company profile
     """
-    try:
-        company = await company_service.get_current_company(request)
-        if not company:
-            return JSONResponse(content={"error": "company not found"}, status_code=404)    
+    try: 
         company_profile = await company_profile_service.get_company_profile_by_company_id(company.id)
         return CompanyProfileResponse(
             industry_type=company_profile.industry_type,
@@ -45,17 +44,15 @@ async def get_company_profile(
     
 @router.post("")
 async def create_company_profile(
-    request: Request,
     payload: CompanyProfileRequest,
-    company_profile_service: CompanyProfileService = Depends(get_company_profile_service),
-    company_service: CompanyService = Depends(get_company_service)
+    company: Company = Depends(get_current_company_user),
+    company_profile_service: CompanyProfileService = Depends(get_company_profile_service)
 ) -> CompanyProfileResponse:
     """
     create company profile
     """
     try:
         company_profile_data = payload.model_dump()
-        company = await company_service.get_current_company(request)
         company_profile_data['company_id'] = company.id
         company_profile = await company_profile_service.create_company_profile_to_db(company_profile_data)
         return CompanyProfileResponse(
@@ -75,17 +72,15 @@ async def create_company_profile(
 
 @router.put("")
 async def update_company_profile(
-    request: Request,
     payload: CompanyProfileRequest,
-    company_profile_service: CompanyProfileService = Depends(get_company_profile_service),
-    company_service: CompanyService = Depends(get_company_service)
+    company: Company = Depends(get_current_company_user),
+    company_profile_service: CompanyProfileService = Depends(get_company_profile_service)
 ) -> CompanyProfileResponse:
     """
     update company profile
     """
     try:
         company_profile_data = payload.model_dump()
-        company = await company_service.get_current_company(request)
         company_profile_data['company_id'] = company.id
         company_profile = await company_profile_service.update_company_profile_to_db(company_profile_data)
         return CompanyProfileResponse(
