@@ -5,6 +5,9 @@ from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
 
+from app.auth.models import Company
+from app.auth.dependencies import get_current_company_user
+
 from app.posts.services.company_post import CompanyPostService
 from app.auth.services.company import CompanyService
 from app.profile.services.position import PositionService
@@ -28,17 +31,13 @@ def get_position_service(session: AsyncSession = Depends(get_async_session)):
 
 @router.get("/")
 async def get_list_company_posts(
-    request: Request,
     company_post_service: CompanyPostService = Depends(get_company_post_service),
-    company_service: CompanyService = Depends(get_company_service)
+    company: Company = Depends(get_current_company_user)
 ):
     """
     get company post
     """
     try:
-        company = await company_service.get_current_company(request)
-        if not company:
-            return JSONResponse(content={"error": "Company not found"}, status_code=404)
         company_posts = await company_post_service.get_list_company_posts_by_company_id(company.id)
 
         return JSONResponse(content={"company_posts": company_posts}, status_code=200)
@@ -61,19 +60,15 @@ async def get_company_post_by_company_post_id(
 
 @router.post("/")
 async def create_company_post(
-    request: Request,
     payload: CompanyPostRequest,
+    company: Company = Depends(get_current_company_user),
     company_post_service: CompanyPostService = Depends(get_company_post_service),
-    company_service: CompanyService = Depends(get_company_service),
     position_service: PositionService = Depends(get_position_service)
 ):
     """
     create company post
     """
     try:
-        company = await company_service.get_current_company(request)
-        if not company:
-            return JSONResponse(content={"error": "Company not found"}, status_code=404)
         company_post_data = payload.model_dump()
         company_post_data['company_id'] = company.id
         position = await position_service.get_position_by_position_id(company_post_data['position_id'])
@@ -88,20 +83,16 @@ async def create_company_post(
 
 @router.put("/{company_post_id}")
 async def update_company_post(
-    request: Request,
     company_post_id: int,
     payload: CompanyPostRequest,
+    company: Company = Depends(get_current_company_user),
     company_post_service: CompanyPostService = Depends(get_company_post_service),
-    company_service: CompanyService = Depends(get_company_service),
     position_service: PositionService = Depends(get_position_service)
 ):
     """
     update company post
     """
     try:
-        company = await company_service.get_current_company(request)
-        if not company:
-            return JSONResponse(content={"error": "Company not found"}, status_code=404)
         company_post_data = payload.model_dump()
         company_post_data['company_id'] = company.id
         position = await position_service.get_position_by_position_id(company_post_data['position_id'])
@@ -116,19 +107,15 @@ async def update_company_post(
 
 @router.delete("/{company_post_id}")
 async def delete_company_post(
-    request: Request,
     company_post_id: int,
+    company: Company = Depends(get_current_company_user),
     company_post_service: CompanyPostService = Depends(get_company_post_service),
-    company_service: CompanyService = Depends(get_company_service)
 ):
     """
     delete company post
     """
     try:
-        company = await company_service.get_current_company(request)
-        if not company:
-            raise ValueError("Company not found")
-        deleted = await company_post_service.delete_company_post(company_post_id)
+        deleted = await company_post_service.delete_company_post(company_post_id, company.id)
         if not deleted:
             raise ValueError("Failed to delete company post")
         return JSONResponse(content={"message": "Company post deleted"}, status_code=200)
