@@ -72,10 +72,18 @@ class CompanyPostService:
             raise ValueError("Failed to update company post")
         return CompanyPostDTO.model_validate(company_post)
 
-    async def delete_company_post(self, company_post_id: int) -> bool:
+    async def delete_company_post(self, company_post_id: int, company_id: int) -> bool:
         """
         delete company post
         args:
             company_post_id: int
         """
+
+        company_post = await self.company_post_repository.get_company_post_by_company_post_id(company_post_id)
+        if not company_post:
+            raise ValueError("Company post not found")
+
+        if company_post.company_id != company_id:
+            raise ValueError("You are not authorized to delete this company post")
+
         return await self.company_post_repository.delete_company_post(company_post_id)
