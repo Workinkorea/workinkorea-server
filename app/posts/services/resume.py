@@ -29,7 +29,7 @@ class ResumeService:
         return [ResumeListDTO.model_validate(resume).model_dump(mode="json") for resume in resume_list]
        
 
-    async def get_resume_by_resume_id(self, resume_id: int) -> Resume | None:
+    async def get_resume_by_resume_id(self, resume_id: int, user_id: int) -> Resume | None:
         """
         get resume by user id
         args:
@@ -38,6 +38,9 @@ class ResumeService:
         resume_data = await self.resume_repository.get_resume_by_resume_id(resume_id)
         if not resume_data:
             raise ValueError("Resume not found")
+        
+        if resume_data.user_id != user_id:
+            raise ValueError("You are not authorized to view this resume")
 
         language_skills = [LanguageSkillsDTO.model_validate(language_skill).model_dump(mode="json") for language_skill in resume_data.language_skills]
         schools = [SchoolsDTO.model_validate(school).model_dump(mode="json") for school in resume_data.schools]
@@ -72,7 +75,7 @@ class ResumeService:
         return resume_id
         
 
-    async def update_resume(self, resume_data: dict) -> Resume | None:
+    async def update_resume(self, resume_data: dict, user_id: int) -> Resume | None:
         """
         update resume
         args:
@@ -82,6 +85,9 @@ class ResumeService:
         resume = await self.resume_repository.get_resume_by_resume_id(resume_data['id'])
         if not resume:
             raise ValueError("Resume not found")
+        
+        if resume.user_id != user_id:
+            raise ValueError("You are not authorized to update this resume")
         
         # 업데이트할 내용이 없으면 예외 발생
         if resume.title == resume_data['title'] and \
@@ -100,7 +106,7 @@ class ResumeService:
         
         
     
-    async def delete_resume(self, resume_id: int) -> bool:
+    async def delete_resume(self, resume_id: int, user_id: int) -> bool:
         """
         delete resume
         args:
@@ -109,5 +115,8 @@ class ResumeService:
         resume = await self.resume_repository.get_resume_by_resume_id(resume_id)
         if not resume:
             raise ValueError("Resume not found")
+        
+        if resume.user_id != user_id:
+            raise ValueError("You are not authorized to delete this resume")
 
         return await self.resume_repository.delete_resume(resume)
