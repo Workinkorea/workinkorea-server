@@ -31,7 +31,7 @@ async def get_profile(
     """
     get current user profile
     """
-    profile: ProfileDTO = await profile_service.get_profile_by_user_id(user.id)
+    profile: ProfileDTO | None = await profile_service.get_profile_by_user_id(user.id)
     if not profile:
         return JSONResponse(content={"error": "profile not found"}, status_code=404)
     return ProfileResponse.model_validate(profile)
@@ -46,7 +46,7 @@ async def update_profile(
     """
     update current user profile
     """
-    updated_profile: ProfileDTO = await profile_service.update_profile(user.id, update_profile_request.model_dump())
+    updated_profile: ProfileDTO | None = await profile_service.update_profile(user.id, update_profile_request.model_dump())
     if not updated_profile:
         return JSONResponse(content={"error": "failed to update profile"}, status_code=400)
     return ProfileResponse.model_validate(updated_profile)
