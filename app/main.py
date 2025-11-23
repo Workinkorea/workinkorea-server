@@ -9,6 +9,8 @@ from app.profile.router import router as profile_router
 from app.posts.router import router as posts_router
 from app.diagnosis.router import router as diagnosis_router
 
+from app.core.settings import SETTINGS
+
 # app
 app = FastAPI(
     title="WorkinKorea Server",
@@ -23,7 +25,7 @@ app_router = APIRouter()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[SETTINGS.CLIENT_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
