@@ -17,6 +17,7 @@ from app.database import get_redis_client
 from app.database import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 # app/core
 from app.core.settings import SETTINGS
 
@@ -267,9 +268,9 @@ async def refresh(request: Request,
         await auth_redis_service.set_refresh_token(refresh_token, email) # 10 days
         
         # jwt token 생성
-        if payload.get("type") == "access":
+        if payload.get("type") == "refresh":
             access_token = await auth_service.create_access_token(user_email)
-        elif payload.get("type") == "access_company":
+        elif payload.get("type") == "refresh_company":
             company_id = payload.get("company_id")
             if not company_id:
                 return JSONResponse(content={"message": "Company ID not found"}, status_code=401)
