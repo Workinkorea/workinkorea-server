@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: Optional[int] = None
     REFRESH_TOKEN_EXPIRE_MINUTES: Optional[int] = None
 
+    # minio 설정
+    MINIO_ENDPOINT: Optional[str] = None
+    MINIO_ACCESS_KEY: Optional[str] = None
+    MINIO_SECRET_KEY: Optional[str] = None
+    MINIO_BUCKET_NAME: Optional[str] = None
+    
     class Config:
         env_file = ".env"
 
