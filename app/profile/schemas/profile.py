@@ -60,3 +60,10 @@ class ProfileResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UserImageRequest(BaseModel):
+    file_name: str
+
+    class Config:
+        from_attributes = True
