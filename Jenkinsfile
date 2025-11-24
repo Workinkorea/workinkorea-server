@@ -41,6 +41,11 @@ pipeline {
         REFRESH_TOKEN_EXPIRE_MINUTES = credentials('refresh-token-expire-minutes')
 
         // TRAEFIK_BASIC_AUTH_USERS = credentials('traefik-basic-auth-users')
+
+        MINIO_ENDPOINT = credentials('minio-endpoint')
+        MINIO_ACCESS_KEY = credentials('minio-access-key')
+        MINIO_SECRET_KEY = credentials('minio-secret-key')
+        MINIO_BUCKET_NAME = credentials('minio-bucket-name')
     }
 
     stages {
@@ -123,6 +128,10 @@ pipeline {
                         -e MAIL_FROM=${env.MAIL_FROM} \
                         -e MAIL_PORT=${env.MAIL_PORT} \
                         -e MAIL_SERVER=${env.MAIL_SERVER} \
+                        -e MINIO_ENDPOINT=${env.MINIO_ENDPOINT} \
+                        -e MINIO_ACCESS_KEY=${env.MINIO_ACCESS_KEY} \
+                        -e MINIO_SECRET_KEY=${env.MINIO_SECRET_KEY} \
+                        -e MINIO_BUCKET_NAME=${env.MINIO_BUCKET_NAME} \
                         ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
                     """
                 }
@@ -175,6 +184,10 @@ pipeline {
                                 -e MAIL_FROM=${env.MAIL_FROM} \
                                 -e MAIL_PORT=${env.MAIL_PORT} \
                                 -e MAIL_SERVER=${env.MAIL_SERVER} \
+                                -e MINIO_ENDPOINT=${env.MINIO_ENDPOINT} \
+                                -e MINIO_ACCESS_KEY=${env.MINIO_ACCESS_KEY} \
+                                -e MINIO_SECRET_KEY=${env.MINIO_SECRET_KEY} \
+                                -e MINIO_BUCKET_NAME=${env.MINIO_BUCKET_NAME} \
                                 ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
                             """
 
@@ -275,6 +288,10 @@ pipeline {
                     -e MAIL_FROM=${env.MAIL_FROM} \
                     -e MAIL_PORT=${env.MAIL_PORT} \
                     -e MAIL_SERVER=${env.MAIL_SERVER} \
+                    -e MINIO_ENDPOINT=${env.MINIO_ENDPOINT} \
+                    -e MINIO_ACCESS_KEY=${env.MINIO_ACCESS_KEY} \
+                    -e MINIO_SECRET_KEY=${env.MINIO_SECRET_KEY} \
+                    -e MINIO_BUCKET_NAME=${env.MINIO_BUCKET_NAME} \
                     ${env.DOCKER_IMAGE_NAME}-${env.COLOR}
                 """
             }
