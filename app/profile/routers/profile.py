@@ -55,7 +55,7 @@ async def update_profile(
     return ProfileResponse.model_validate(updated_profile)
 
 
-@router.post("test/user/image")
+@router.post("/profile/image")
 async def test_user_image(
     user_image_request: UserImageRequest,
     user: User = Depends(get_current_user),
@@ -64,6 +64,17 @@ async def test_user_image(
     """
     test user image
     """
-    file_data = user_image_request.model_dump()
-    file_url_data = minio_handles.upload_resume_file(user.id, file_data['file_name'], "user_image", "image/jpeg")
-    return JSONResponse(content={"minio_test": file_url_data}, status_code=200)
+    try:
+        file_data = user_image_request.model_dump()
+        if not file_data['file_name']:
+            raise ValueError("file_name is required")
+        if file_data['content_type'] != "image/jpeg" and file_data['content_type'] != "image/png" and file_data['content_type'] != "image/jpg":
+            raise ValueError("content_type is required")
+        if file_data['max_size'] >= 5 * 1024 * 1024:
+            raise ValueError("max_size is too large")
+        minio_data = await minio_handles.upload_resume_file(user.id, file_data['file_name'], "user_image", file_data['content_type'], file_data['max_size'])
+        return JSONResponse(content={"minio": minio_data}, status_code=200)
+    except ValueError as e:
+        return JSONResponse(content={"error": str(e)}, status_code=404)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
