@@ -64,6 +64,8 @@ class ProfileResponse(BaseModel):
 
 class UserImageRequest(BaseModel):
     file_name: str
+    content_type: str
+    max_size: int
 
     class Config:
         from_attributes = True
