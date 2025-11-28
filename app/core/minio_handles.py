@@ -10,7 +10,8 @@ minio_client = Minio(
     endpoint=SETTINGS.MINIO_ENDPOINT,
     access_key=SETTINGS.MINIO_ACCESS_KEY,
     secret_key=SETTINGS.MINIO_SECRET_KEY,
-    secure=True
+    secure=True,
+    region="us-east-1"
 )
 
 
@@ -21,7 +22,7 @@ class MinioHandles:
         self.bucket_name = SETTINGS.MINIO_BUCKET_NAME
 
     
-    def upload_resume_file(
+    async def upload_resume_file(
         self,
         user_id: int,
         file_name: str,
@@ -42,7 +43,7 @@ class MinioHandles:
             file_ext = file_name.split(".")[-1]
             object_name = f"{file_type}/{user_id}/{uuid.uuid4()}.{file_ext}"
 
-            expires = datetime.datetime.utcnow() + datetime.timedelta(minutes=expires_minutes)
+            expires = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=expires_minutes)
 
             policy = PostPolicy(
                 bucket_name=self.bucket_name,
@@ -55,7 +56,7 @@ class MinioHandles:
             policy.add_equals_condition("Content-Type", content_type)
             
             # 파일 크기 제한(MB)
-            policy.add_content_length_range_condition(1, max_size * 1024 * 1024)
+            policy.add_content_length_range_condition(1, max_size)
 
             # success_action_status 제한
             policy.add_equals_condition("success_action_status", "201")
@@ -64,9 +65,10 @@ class MinioHandles:
             form_data = self.minio_client.presigned_post_policy(policy)
 
             return {
-                "url": f"{SETTINGS.MINIO_ENDPOINT}/{self.bucket_name}",
-                "fields": form_data,
-                "object_name": object_name,
+                "url": f"https://{SETTINGS.MINIO_ENDPOINT}/{self.bucket_name}",
+                "key": object_name,
+                "content_type": content_type,
+                "form_data": form_data,
                 "expires": expires.isoformat()
             }
         except Exception as e:
