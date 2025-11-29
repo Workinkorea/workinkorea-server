@@ -247,7 +247,7 @@ pipeline {
             echo "old container : ${env.DOCKER_IMAGE_NAME}-${env.COLOR} stopped"
         }
         failure {
-            error "rollback to ${env.COLOR} container"
+            echo "rollback to ${env.COLOR} container"
             script {
                 sh """
                     docker stop ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
@@ -256,6 +256,7 @@ pipeline {
                     """
                 sleep 5
                 sh """
+                    docker stop ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
                     docker rm ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
                     docker run -d \
                     --name ${env.DOCKER_IMAGE_NAME}-${env.COLOR} \
