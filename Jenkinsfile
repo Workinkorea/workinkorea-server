@@ -254,52 +254,74 @@ pipeline {
                     docker rm ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
                     docker rmi ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
                     """
-                sleep 5
-                sh """
-                    docker stop ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
-                    docker rm ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
-                    docker run -d \
-                    --name ${env.DOCKER_IMAGE_NAME}-${env.COLOR} \
-                    --network core_network \
-                    --label 'traefik.enable=true' \
-                    --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.rule=Host(\"arw.${env.BASE_URL}\")' \
-                    --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.entrypoints=websecure' \
-                    --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.tls.certresolver=le' \
-                    --label 'traefik.http.services.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.loadbalancer.server.port=${env.PORT}' \
-                    -e COOKIE_DOMAIN=${env.COOKIE_DOMAIN} \
-                    -e CLIENT_URL=${env.CLIENT_URL} \
-                    -e DATABASE_SYNC_URL=${env.DATABASE_SYNC_URL} \
-                    -e DATABASE_ASYNC_URL=${env.DATABASE_ASYNC_URL} \
-                    -e REDIS_HOST=${env.REDIS_HOST} \
-                    -e REDIS_PORT=${env.REDIS_PORT} \
-                    -e REDIS_DB=${env.REDIS_DB} \
-                    -e GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID} \
-                    -e GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET} \
-                    -e GOOGLE_REDIRECT_URI=${env.GOOGLE_REDIRECT_URI} \
-                    -e GOOGLE_AUTHORIZATION_URL=${env.GOOGLE_AUTHORIZATION_URL} \
-                    -e GOOGLE_TOKEN_URL=${env.GOOGLE_TOKEN_URL} \
-                    -e GOOGLE_USER_INFO_URL=${env.GOOGLE_USER_INFO_URL} \
-                    -e JWT_SECRET=${env.JWT_SECRET} \
-                    -e JWT_ALGORITHM=${env.JWT_ALGORITHM} \
-                    -e ACCESS_TOKEN_EXPIRE_MINUTES=${env.ACCESS_TOKEN_EXPIRE_MINUTES} \
-                    -e REFRESH_TOKEN_EXPIRE_MINUTES=${env.REFRESH_TOKEN_EXPIRE_MINUTES} \
-                    -e MAIL_USERNAME=${env.MAIL_USERNAME} \
-                    -e MAIL_PASSWORD="${env.MAIL_PASSWORD}" \
-                    -e MAIL_FROM_NAME="${env.MAIL_FROM_NAME}" \
-                    -e MAIL_FROM=${env.MAIL_FROM} \
-                    -e MAIL_PORT=${env.MAIL_PORT} \
-                    -e MAIL_SERVER=${env.MAIL_SERVER} \
-                    -e MINIO_ENDPOINT=${env.MINIO_ENDPOINT} \
-                    -e MINIO_ACCESS_KEY=${env.MINIO_ACCESS_KEY} \
-                    -e MINIO_SECRET_KEY=${env.MINIO_SECRET_KEY} \
-                    -e MINIO_BUCKET_NAME=${env.MINIO_BUCKET_NAME} \
-                    ${env.DOCKER_IMAGE_NAME}-${env.COLOR}
-                """
+                if (env.COLOR != "none") {
+                    echo "Rolling back to ${env.COLOR} container..."
+                    
+                    // 이전 컨테이너 이미지 존재 여부 확인
+                    def oldImageExists = sh(
+                        script: "docker images -q ${env.DOCKER_IMAGE_NAME}-${env.COLOR}",
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (oldImageExists) {
+                        sleep 5
+                        sh """
+                            docker stop ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
+                            docker rm ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
+                            docker run -d \
+                                --name ${env.DOCKER_IMAGE_NAME}-${env.COLOR} \
+                                --network core_network \
+                                --label 'traefik.enable=true' \
+                                --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.rule=Host(\"arw.${env.BASE_URL}\")' \
+                                --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.entrypoints=websecure' \
+                                --label 'traefik.http.routers.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.tls.certresolver=le' \
+                                --label 'traefik.http.services.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.loadbalancer.server.port=${env.PORT}' \
+                                -e COOKIE_DOMAIN=${env.COOKIE_DOMAIN} \
+                                -e CLIENT_URL=${env.CLIENT_URL} \
+                                -e DATABASE_SYNC_URL=${env.DATABASE_SYNC_URL} \
+                                -e DATABASE_ASYNC_URL=${env.DATABASE_ASYNC_URL} \
+                                -e REDIS_HOST=${env.REDIS_HOST} \
+                                -e REDIS_PORT=${env.REDIS_PORT} \
+                                -e REDIS_DB=${env.REDIS_DB} \
+                                -e GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID} \
+                                -e GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET} \
+                                -e GOOGLE_REDIRECT_URI=${env.GOOGLE_REDIRECT_URI} \
+                                -e GOOGLE_AUTHORIZATION_URL=${env.GOOGLE_AUTHORIZATION_URL} \
+                                -e GOOGLE_TOKEN_URL=${env.GOOGLE_TOKEN_URL} \
+                                -e GOOGLE_USER_INFO_URL=${env.GOOGLE_USER_INFO_URL} \
+                                -e JWT_SECRET=${env.JWT_SECRET} \
+                                -e JWT_ALGORITHM=${env.JWT_ALGORITHM} \
+                                -e ACCESS_TOKEN_EXPIRE_MINUTES=${env.ACCESS_TOKEN_EXPIRE_MINUTES} \
+                                -e REFRESH_TOKEN_EXPIRE_MINUTES=${env.REFRESH_TOKEN_EXPIRE_MINUTES} \
+                                -e MAIL_USERNAME=${env.MAIL_USERNAME} \
+                                -e MAIL_PASSWORD="${env.MAIL_PASSWORD}" \
+                                -e MAIL_FROM_NAME="${env.MAIL_FROM_NAME}" \
+                                -e MAIL_FROM=${env.MAIL_FROM} \
+                                -e MAIL_PORT=${env.MAIL_PORT} \
+                                -e MAIL_SERVER=${env.MAIL_SERVER} \
+                                -e MINIO_ENDPOINT=${env.MINIO_ENDPOINT} \
+                                -e MINIO_ACCESS_KEY=${env.MINIO_ACCESS_KEY} \
+                                -e MINIO_SECRET_KEY=${env.MINIO_SECRET_KEY} \
+                                -e MINIO_BUCKET_NAME=${env.MINIO_BUCKET_NAME} \
+                                ${env.DOCKER_IMAGE_NAME}-${env.COLOR}
+                        """
+                        echo "Successfully rolled back to ${env.COLOR} container"
+                        discordSend description: "Deployment failed. Successfully rolled back to ${env.DOCKER_IMAGE_NAME}-${env.COLOR}",
+                              title: "Failure : Workinkorea-Server", 
+                              webhookURL: "${env.DISCORD_WEBHOOK_URL}"
+                    } else {
+                        echo "Previous container image not found. Cannot rollback."
+                        discordSend description: "Deployment failed! Rollback not possible. Previous image ${env.DOCKER_IMAGE_NAME}-${env.COLOR} not found.",
+                              title: "Failure : Workinkorea-Server", 
+                              webhookURL: "${env.DISCORD_WEBHOOK_URL}"
+                    }
+                } else {
+                    echo "This is the first deployment (no previous container to rollback to)"
+                    discordSend description: "Deployment failed! This was the first deployment, so no rollback is available. Please check the deployment manually.",
+                            title: "Failure : Workinkorea-Server", 
+                            webhookURL: "${env.DISCORD_WEBHOOK_URL}"
+                }
             }
-            discordSend description: "${env.DOCKER_IMAGE_NAME}-${env.COLOR} rolled back",
-                  title: "Failure : Workinkorea-Server", 
-                  webhookURL: "${env.DISCORD_WEBHOOK_URL}"
-            echo "Rolled back to ${env.COLOR} container"
         }
     }
 }
