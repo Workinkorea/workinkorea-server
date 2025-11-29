@@ -22,5 +22,6 @@ class CompanyProfile(Base):
     address: Mapped[str] = mapped_column(String, index=True) # 주소
     website_url: Mapped[str] = mapped_column(String, index=True) # 홈페이지 주소
     email: Mapped[str] = mapped_column(String, index=True) # 대표 이메일
+    company_image_url: Mapped[str] = mapped_column(String, index=True, nullable=True) # 회사 로고
 
     company: Mapped["Company"] = relationship("Company", back_populates="company_profile")

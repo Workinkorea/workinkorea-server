@@ -39,7 +39,7 @@ class ProfileRepository:
         except Exception as e:
             raise e
         
-    async def update_profile(self, user_id: int, profile_data: dict) -> bool:
+    async def update_profile(self, user_id: int, profile_data: dict) -> Profile | None:
         """
         update profile
         args:
@@ -47,10 +47,10 @@ class ProfileRepository:
             profile_data: dict
         """
         try:
-            stmt = update(Profile).values(profile_data).where(Profile.user_id == user_id)
+            stmt = update(Profile).values(profile_data).where(Profile.user_id == user_id).returning(Profile)
             result = await self.session.execute(stmt)
             await self.session.commit()
-            return result.rowcount > 0
+            return result.scalar_one_or_none()
         except Exception as e:
             raise e
         

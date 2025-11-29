@@ -8,6 +8,7 @@ from app.auth.router import router as auth_router
 from app.profile.router import router as profile_router
 from app.posts.router import router as posts_router
 from app.diagnosis.router import router as diagnosis_router
+from app.minio.routers import router as minio_router
 
 from app.core.settings import SETTINGS
 
@@ -35,4 +36,5 @@ app.include_router(app_router)
 app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(posts_router)
-app.include_router(diagnosis_router)
+app.include_router(diagnosis_router)    
+app.include_router(minio_router)

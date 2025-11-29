@@ -10,6 +10,7 @@ class Resume(Base):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String, index=True)
     profile_url: Mapped[str] = mapped_column(String, index=True, nullable=True)
+    resume_url: Mapped[str] = mapped_column(String, index=True, nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="resumes")
     language_skills: Mapped[list["LanguageSkills"]] = relationship(
