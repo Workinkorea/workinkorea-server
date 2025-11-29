@@ -7,7 +7,7 @@ from app.database import get_async_session
 
 from app.auth.models import User
 from app.auth.dependencies import get_current_user
-from app.profile.schemas.profile import ProfileDTO, UpdateProfileRequest, ProfileResponse, UserImageRequest
+from app.profile.schemas.profile import ProfileDTO, UpdateProfileRequest, ProfileResponse
 from app.profile.services.profile import ProfileService
 
 router = APIRouter(
