@@ -10,6 +10,7 @@ class CompanyPost(Base):
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
     title: Mapped[str] = mapped_column(String, index=True)
     content: Mapped[str] = mapped_column(String, index=True)
+    content_url: Mapped[str] = mapped_column(String, index=True, nullable=True) # 공고를 이미지로 사용하는 경우
     work_experience: Mapped[str] = mapped_column(String, index=True)
     position_id: Mapped[int] = mapped_column(ForeignKey("positions.id"), index=True)
     education: Mapped[str] = mapped_column(String, index=True)
@@ -19,7 +20,7 @@ class CompanyPost(Base):
     working_hours: Mapped[int] = mapped_column(Integer, index=True)
     salary: Mapped[int] = mapped_column(Integer, index=True)
     start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, nullable=True)
 
     company: Mapped["Company"] = relationship("Company", back_populates="company_posts")
     position: Mapped["Position"] = relationship("Position", back_populates="company_posts")
