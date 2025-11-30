@@ -26,7 +26,7 @@ async def get_all_users(
     user_service: AdminUserService = Depends(get_admin_user_service)
 ):
     """
-    유저 목록 페이지네이션으로 가져옴
+    Get all users with pagination (Admin only)
     """
     try:
         users = await user_service.get_all_users(skip, limit)
@@ -42,7 +42,7 @@ async def get_user_by_id(
     user_service: AdminUserService = Depends(get_admin_user_service)
 ):
     """
-    유저 아이디로 하나만 가져옴
+    Get user by id (Admin only)
     """
     try:
         user = await user_service.get_user_by_id(user_id)
@@ -61,7 +61,7 @@ async def update_user(
     user_service: AdminUserService = Depends(get_admin_user_service)
 ):
     """
-    유저 수정하기
+    Update user (Admin only)
     """
     try:
         user_data = payload.model_dump(exclude_unset=True)
@@ -80,7 +80,7 @@ async def delete_user(
     user_service: AdminUserService = Depends(get_admin_user_service)
 ):
     """
-    유저 삭제하기
+    Delete user (Admin only)
     """
     try:
         deleted = await user_service.delete_user(user_id)
