@@ -26,7 +26,7 @@ class MinioHandles:
         self,
         user_id: int,
         file_name: str,
-        file_type: str,
+        minio_path: str,
         content_type: str,
         max_size: int = 10,
         expires_minutes: int = 5
@@ -58,10 +58,10 @@ class MinioHandles:
                 raise ValueError("MINIO_BUCKET_NAME is not configured")
 
             file_ext = file_name.split(".")[-1] if "." in file_name else ""
-            if file_type == FileType.PROFILE_IMAGE or file_type == FileType.COMPANY_IMAGE:
-                object_name = f"{file_type}/{user_id}"
+            if minio_path == FileType.PROFILE_IMAGE.value or minio_path == FileType.COMPANY_IMAGE.value:
+                object_name = f"{minio_path}/{user_id}"
             else:
-                object_name = f"{file_type}/{user_id}/{uuid.uuid4()}.{file_ext}"
+                object_name = f"{minio_path}/{user_id}/{uuid.uuid4()}.{file_ext}"
 
             expires = datetime.datetime.now(
                 datetime.timezone.utc) + datetime.timedelta(minutes=expires_minutes)

@@ -42,7 +42,7 @@ async def upload_company_image(
             return JSONResponse(content={"error": "content_type is invalid"}, status_code=400)
         if file_data['max_size'] >= config['max_size_mb']:
             return JSONResponse(content={"error": "max_size is too large"}, status_code=400)
-        minio_data: MinioFileUrlDTO | None = await minio_handles.upload_file_url(company.id, file_data['file_name'], file_data['file_type'], file_data['content_type'], file_data['max_size'])
+        minio_data: MinioFileUrlDTO | None = await minio_handles.upload_file_url(company.id, file_data['file_name'], config['minio_path'], file_data['content_type'], file_data['max_size'])
         if not minio_data:
             return JSONResponse(content={"error": "failed to upload file"}, status_code=400)
         return MinioFileResponse.model_validate(minio_data)
@@ -64,7 +64,6 @@ async def upload_user_image(
     try:
         config = FILE_TYPE_CONFIG.get(payload.file_type)
         file_data = payload.model_dump()
-
         if not config:
             return JSONResponse(content={"error": "file_type is invalid"}, status_code=400)
         if not file_data['file_name']:
@@ -75,7 +74,7 @@ async def upload_user_image(
             return JSONResponse(content={"error": "content_type is invalid"}, status_code=400)
         if file_data['max_size'] >= config['max_size_mb']:
             return JSONResponse(content={"error": "max_size is too large"}, status_code=400)
-        minio_data: MinioFileUrlDTO | None = await minio_handles.upload_file_url(user.id, file_data['file_name'], file_data['file_type'], file_data['content_type'], file_data['max_size'])
+        minio_data: MinioFileUrlDTO | None = await minio_handles.upload_file_url(user.id, file_data['file_name'], config['minio_path'], file_data['content_type'], file_data['max_size'])
         if not minio_data:
             return JSONResponse(content={"error": "failed to upload file"}, status_code=400)
         return MinioFileResponse.model_validate(minio_data)
