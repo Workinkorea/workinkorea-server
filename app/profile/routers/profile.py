@@ -10,7 +10,6 @@ from app.auth.dependencies import get_current_user
 from app.profile.schemas.profile import ProfileDTO, UpdateProfileRequest, ProfileResponse
 from app.profile.services.profile import ProfileService
 
-
 router = APIRouter(
     prefix="/me",
     tags=["me"]

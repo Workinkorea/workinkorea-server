@@ -24,7 +24,6 @@ class ProfileDTO(BaseModel):
 
 
 class UpdateProfileRequest(BaseModel):
-    user_id: int
     profile_image_url: Optional[str] = None
     location: Optional[str] = None # 현재 거주중인 도시/위치 등
     introduction: Optional[str] = None
@@ -44,7 +43,6 @@ class UpdateProfileRequest(BaseModel):
 
 
 class ProfileResponse(BaseModel):
-    user_id: int
     profile_image_url: Optional[str] = None
     location: Optional[str] = None
     introduction: Optional[str] = None

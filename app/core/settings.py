@@ -41,8 +41,14 @@ class Settings(BaseSettings):
 
     # admin 설정 -> 어드민 메일주소는 콤마로 구분됨.
     # 예를들어서 -> .env에 ADMIN_EMAILS=admin1@example.com,admin2@example.com,admin3@example.com 이런식으로 입력해야함.
-    ADMIN_EMAILS: str = None
+    ADMIN_EMAILS: Optional[str] = None
 
+    # minio 설정
+    MINIO_ENDPOINT: Optional[str] = None
+    MINIO_ACCESS_KEY: Optional[str] = None
+    MINIO_SECRET_KEY: Optional[str] = None
+    MINIO_BUCKET_NAME: Optional[str] = None
+    
     class Config:
         env_file = ".env"
 
