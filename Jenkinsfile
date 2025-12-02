@@ -242,28 +242,23 @@ pipeline {
                     """
             }
             discordSend description: "${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} deployed successfully",
-                  title: "Success : Workinkorea-Server", 
-                  webhookURL: "${env.DISCORD_WEBHOOK_URL}"
+                title: "Success : Workinkorea-Server", 
+                webhookURL: "${env.DISCORD_WEBHOOK_URL}",
+                result: currentBuild.currentResult
             echo "old container : ${env.DOCKER_IMAGE_NAME}-${env.COLOR} stopped"
         }
         failure {
             echo "rollback to ${env.COLOR} container"
             script {
-                sh """
-                    docker stop ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
-                    docker rm ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
-                    docker rmi ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
-                    """
-                if (env.COLOR != "none") {
-                    echo "Rolling back to ${env.COLOR} container..."
-                    
-                    // 이전 컨테이너 이미지 존재 여부 확인
-                    def oldImageExists = sh(
-                        script: "docker images -q ${env.DOCKER_IMAGE_NAME}-${env.COLOR}",
-                        returnStdout: true
-                    ).trim()
-                    
-                    if (oldImageExists) {
+                try{
+                    sh """
+                        docker stop ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
+                        docker rm ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
+                        docker rmi ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
+                        """
+                    if (env.COLOR != "none") {
+                        echo "Rolling back to ${env.COLOR} container..."
+
                         sleep 5
                         sh """
                             docker stop ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
@@ -306,22 +301,17 @@ pipeline {
                                 ${env.DOCKER_IMAGE_NAME}-${env.COLOR}
                         """
                         echo "Successfully rolled back to ${env.COLOR} container"
-                        discordSend description: "Deployment failed. Successfully rolled back to ${env.DOCKER_IMAGE_NAME}-${env.COLOR}",
-                              title: "Failure : Workinkorea-Server", 
-                              webhookURL: "${env.DISCORD_WEBHOOK_URL}"
                     } else {
-                        echo "Previous container image not found. Cannot rollback."
-                        discordSend description: "Deployment failed! Rollback not possible. Previous image ${env.DOCKER_IMAGE_NAME}-${env.COLOR} not found.",
-                              title: "Failure : Workinkorea-Server", 
-                              webhookURL: "${env.DISCORD_WEBHOOK_URL}"
+                        echo "No previous container to rollback"
                     }
-                } else {
-                    echo "This is the first deployment (no previous container to rollback to)"
-                    discordSend description: "Deployment failed! This was the first deployment, so no rollback is available. Please check the deployment manually.",
-                            title: "Failure : Workinkorea-Server", 
-                            webhookURL: "${env.DISCORD_WEBHOOK_URL}"
+                } catch (Exception e) {
+                    echo "Rollback failed: ${e.message}"
                 }
             }
+            discordSend description: "Deployment failed. ${env.COLOR != 'none' ? 'Rollback attempted' : 'No rollback needed'}",
+                title: "Failure : Workinkorea-Server", 
+                webhookURL: "${env.DISCORD_WEBHOOK_URL}",
+                result: currentBuild.currentResult
         }
     }
 }
