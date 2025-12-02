@@ -124,9 +124,13 @@ async def login_google_callback(
 
         status_massage_dict = {"status": "success", "user_email": user.email}
 
-        # jwt token 생성
-        access_token = await auth_service.create_access_token(user.email)
-        refresh_token = await auth_service.create_refresh_token(user.email)
+        # user_gubun 체크해서 어드민이면 어드민 토큰 발급하고 아님녀 유저 토큰 발급
+        if user.user_gubun == "admin":
+            access_token = await auth_service.create_admin_access_token(user.email)
+            refresh_token = await auth_service.create_admin_refresh_token(user.email)
+        else: # 일반인
+            access_token = await auth_service.create_access_token(user.email)
+            refresh_token = await auth_service.create_refresh_token(user.email)
 
         # 파라미터 user name, access token 저장
         status_massage_dict["user_id"] = user.id
@@ -252,10 +256,22 @@ async def refresh(request: Request,
         return JSONResponse(content={"message": "Refresh token not found"}, status_code=401)
 
     try:
-        # refresh token 검증
-        payload = jwt.decode(refresh_token, SETTINGS.JWT_SECRET, algorithms=[
-                             SETTINGS.JWT_ALGORITHM])
-        user_email = payload.get("sub")
+        # refresh token 타입에 따라 다른 SECRET으로 검증
+        token_type = None
+        user_email = None
+
+        # 먼저 어드민 토큰인지 확인 (어드민 SECRET으로 디코딩 시도)
+        try:
+            payload = jwt.decode(refresh_token, SETTINGS.ADMIN_JWT_SECRET, algorithms=[SETTINGS.ADMIN_JWT_ALGORITHM])
+            token_type = payload.get("type")
+            if token_type == "admin_refresh":
+                user_email = payload.get("sub")
+        except:
+            # 어드민 토큰이 아니면 일반 토큰으로 디코딩
+            payload = jwt.decode(refresh_token, SETTINGS.JWT_SECRET, algorithms=[SETTINGS.JWT_ALGORITHM])
+            token_type = payload.get("type")
+            user_email = payload.get("sub")
+
         if not user_email:
             return JSONResponse(content={"message": "Invalid refresh token"}, status_code=401)
 
@@ -266,21 +282,26 @@ async def refresh(request: Request,
 
         await auth_redis_service.delete_refresh_token(refresh_token)
         await auth_redis_service.set_refresh_token(refresh_token, email) # 10 days
-        
-        # jwt token 생성
-        if payload.get("type") == "refresh":
+
+        # jwt token 생성 (토큰 타입에 따라 분기)
+        if token_type == "admin_refresh":
+            # 어드민 토큰 갱신
+            access_token = await auth_service.create_admin_access_token(user_email)
+        elif token_type == "refresh":
+            # 일반 유저 토큰 갱신
             access_token = await auth_service.create_access_token(user_email)
-        elif payload.get("type") == "refresh_company":
+        elif token_type == "refresh_company":
+            # 회사 유저 토큰 갱신
             company_id = payload.get("company_id")
             if not company_id:
                 return JSONResponse(content={"message": "Company ID not found"}, status_code=401)
             access_token = await company_service.create_access_company_token(user_email, int(company_id))
         else:
-            return JSONResponse(content={"message": "Invalid access token"}, status_code=401)
-        
+            return JSONResponse(content={"message": "Invalid token type"}, status_code=401)
+
         if not access_token:
             return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
-        
+
         return JSONResponse(content={"access_token": access_token})
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)

@@ -11,6 +11,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String, index=True, unique=True)
     passport_certi: Mapped[bool] = mapped_column(Boolean, index=True, default=False)
+    user_gubun: Mapped[str] = mapped_column(String, index=True, default="user", server_default="user")
 
     profile: Mapped["Profile"] = relationship(
         "Profile",

@@ -26,8 +26,8 @@ async def get_admin_user(
     auth_repository: AuthRepository = Depends(get_auth_repository)
 ) -> User:
     """
-    현재 어드민 유저 체크
-    JWT 토큰 검증하고 어드민 이메일 리스트에 있는지 체크
+    현재 어드민 유저 체크 (어드민 전용 토큰 시스템)
+    ADMIN JWT 토큰 검증하고 user_gubun='admin' 및 어드민 이메일 리스트 이중 체크
     args:
         credentials: HTTPAuthorizationCredentials
         auth_repository: AuthRepository
@@ -45,17 +45,33 @@ async def get_admin_user(
             detail="Not authenticated"
         )
 
+    # 어드민 전용 jwt secret과 알고리즘 갖고 검증함
+    if not SETTINGS.ADMIN_JWT_SECRET or not SETTINGS.ADMIN_JWT_ALGORITHM:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Admin JWT configuration not found"
+        )
+
     try:
         payload = jwt.decode(
             access_token,
-            SETTINGS.JWT_SECRET,
-            algorithms=[SETTINGS.JWT_ALGORITHM]
+            SETTINGS.ADMIN_JWT_SECRET,
+            algorithms=[SETTINGS.ADMIN_JWT_ALGORITHM]
         )
         email: str = payload.get("sub")
+        token_type: str = payload.get("type")
+
         if not email:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token"
+            )
+
+        # 어드민 토큰 타입 체크
+        if token_type != "admin_access":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid admin token type"
             )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -75,7 +91,14 @@ async def get_admin_user(
             detail="User not found"
         )
 
-    # 어드민 이메일 리스트에 있는지 체크
+    # user_gubun이 'admin'인지 체크
+    if user.user_gubun != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required - invalid user type"
+        )
+
+    # 어드민 이메일 리스트에 있는지 체크 (이중 체크)
     if not SETTINGS.ADMIN_EMAILS:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -86,7 +109,7 @@ async def get_admin_user(
     if user.email not in admin_emails:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            detail="Admin access required - email not authorized"
         )
 
     return user

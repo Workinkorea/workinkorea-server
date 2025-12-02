@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: Optional[int] = None
     REFRESH_TOKEN_EXPIRE_MINUTES: Optional[int] = None
 
+    # 어드민 전용 jwt 설정 -> 메일주소랑 같이 확인해야함.
+    ADMIN_JWT_SECRET: Optional[str] = None
+    ADMIN_JWT_ALGORITHM: Optional[str] = None
+    ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES: Optional[int] = None
+    ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES: Optional[int] = None
+
     # admin 설정 -> 어드민 메일주소는 콤마로 구분됨.
     # 예를들어서 -> .env에 ADMIN_EMAILS=admin1@example.com,admin2@example.com,admin3@example.com 이런식으로 입력해야함.
     ADMIN_EMAILS: Optional[str] = None
