@@ -107,6 +107,42 @@ class AuthService:
         except Exception as e:
             raise e
 
+    async def create_admin_access_token(self, user_email: str) -> str:
+        """
+        어드민 전용 토큰 만들기
+        args:
+            user_email: str
+        """
+        try:
+            to_encode = {
+                "sub": user_email,
+                "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=SETTINGS.ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES),
+                "type": "admin_access"
+            }
+            admin_access_token = jwt.encode(
+                to_encode, SETTINGS.ADMIN_JWT_SECRET, algorithm=SETTINGS.ADMIN_JWT_ALGORITHM)
+            return admin_access_token
+        except Exception as e:
+            raise e
+
+    async def create_admin_refresh_token(self, user_email: str) -> str:
+        """
+        어드민 전용 리프레시 토큰 만들기
+        args:
+            user_email: str
+        """
+        try:
+            to_encode = {
+                "sub": user_email,
+                "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=SETTINGS.ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES),
+                "type": "admin_refresh"
+            }
+            admin_refresh_token = jwt.encode(
+                to_encode, SETTINGS.ADMIN_JWT_SECRET, algorithm=SETTINGS.ADMIN_JWT_ALGORITHM)
+            return admin_refresh_token
+        except Exception as e:
+            raise e
+
     # async def get_current_user(self, request: Request) -> User | JSONResponse:
     #     """
     #     get current user
