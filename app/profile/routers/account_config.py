@@ -1,0 +1,56 @@
+# app/profile/routers/account_config.py
+from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_async_session
+
+from app.auth.models import User
+from app.auth.dependencies import get_current_user
+from app.profile.schemas.account_config import (
+    AccountConfigDTO,
+    UpdateAccountConfigRequest,
+    AccountConfigResponse
+)
+from app.profile.services.account_config import AccountConfigService
+
+
+router = APIRouter(
+    prefix="/account-config",
+    tags=["account-config"]
+    # dependencies=[Depends(get_token_header)],
+    # responses={404: {"description": "Not found"}}
+)
+
+
+def get_account_config_service(session: AsyncSession = Depends(get_async_session)):
+    return AccountConfigService(session)
+
+
+@router.get("")
+async def get_account_config(
+    user: User = Depends(get_current_user),
+    account_config_service: AccountConfigService = Depends(get_account_config_service)
+) -> AccountConfigResponse:
+    """
+    get current user account config
+    """
+    account_config: AccountConfigDTO = await account_config_service.get_account_config_by_user_id(user.id)
+    if not account_config:
+        return JSONResponse(content={"error": "account config not found"}, status_code=404)
+    return AccountConfigResponse.model_validate(account_config)
+
+
+@router.put("")
+async def update_account_config(
+    update_account_config_request: UpdateAccountConfigRequest,
+    user: User = Depends(get_current_user),
+    account_config_service: AccountConfigService = Depends(get_account_config_service)
+) -> AccountConfigResponse:
+    """
+    update current user account config
+    """
+    updated_account_config: AccountConfigDTO = await account_config_service.update_account_config(user.id, update_account_config_request.model_dump())
+    if not updated_account_config:
+        return JSONResponse(content={"error": "failed to update account config"}, status_code=400)
+    return AccountConfigResponse.model_validate(updated_account_config)
