@@ -232,6 +232,35 @@ pipeline {
         }    
     }
     post {
+        always{
+            script {
+                // GitHub Checks 발행
+                def checkStatus = currentBuild.result ?: 'SUCCESS'
+                def checkConclusion = checkStatus == 'SUCCESS' ? 'SUCCESS' : 'FAILURE'
+                
+                publishChecks(
+                    name: 'Workinkorea Server Deployment',
+                    title: 'Workinkorea Server Deployment Check',
+                    summary: "Deployment ${checkConclusion} for ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}",
+                    text: """
+                        ## Deployment Details
+                        - **Container**: ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
+                        - **Status**: ${checkConclusion}
+                        - **Build Number**: ${env.BUILD_NUMBER}
+                        - **Branch**: ${env.BRANCH_NAME ?: 'N/A'}
+                        
+                        ### Stages Completed
+                        - Docker Container Check
+                        - Docker Build
+                        - Docker Run
+                        - Health Check & Traefik Switch
+                        - Traefik Test
+                    """,
+                    conclusion: checkConclusion,
+                    detailsURL: "${env.BUILD_URL}"
+                )
+            }
+        }
         success {
             echo "success"
             script {
