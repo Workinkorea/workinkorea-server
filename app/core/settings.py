@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     # URL 설정
     COOKIE_DOMAIN: Optional[str] = None
     CLIENT_URL: Optional[str] = None
+    ORIGINS_URLS: Optional[str] = None
 
     # 이메일 설정
     MAIL_USERNAME: Optional[str] = None
@@ -38,6 +39,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: Optional[str] = None
     ACCESS_TOKEN_EXPIRE_MINUTES: Optional[int] = None
     REFRESH_TOKEN_EXPIRE_MINUTES: Optional[int] = None
+
 
     # 어드민 전용 jwt 설정 -> 메일주소랑 같이 확인해야함.
     ADMIN_JWT_SECRET: Optional[str] = None

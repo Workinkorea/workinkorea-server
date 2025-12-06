@@ -29,7 +29,7 @@ def get_company_service(session: AsyncSession = Depends(get_async_session)):
 def get_position_service(session: AsyncSession = Depends(get_async_session)):
     return PositionService(session)
 
-@router.get("/")
+@router.get("")
 async def get_list_company_posts(
     company_post_service: CompanyPostService = Depends(get_company_post_service),
     company: Company = Depends(get_current_company_user)
@@ -58,7 +58,7 @@ async def get_company_post_by_company_post_id(
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-@router.post("/")
+@router.post("")
 async def create_company_post(
     payload: CompanyPostRequest,
     company: Company = Depends(get_current_company_user),
