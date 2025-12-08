@@ -12,11 +12,12 @@ class ResumeListDTO(BaseModel):
     class Config:
         from_attributes = True
 
+
 class ResumeDTO(BaseModel):
     id: int
     user_id: int
     title: str
-    profile_url: str = None
+    profile_url: Optional[str] = None
     language_skills: Optional[list["LanguageSkillsDTO"]] = None
     schools: Optional[list["SchoolsDTO"]] = None
     career_history: Optional[list["CareerHistoryDTO"]] = None
@@ -26,46 +27,51 @@ class ResumeDTO(BaseModel):
     class Config:
         from_attributes = True
 
+
 class LanguageSkillsDTO(BaseModel):
-    language_type: str = None
-    level: str = None
+    language_type: Optional[str] = None
+    level: Optional[str] = None
 
     class Config:
         from_attributes = True
+
 
 class SchoolsDTO(BaseModel):
     school_name: str
     major_name: str
     start_date: datetime
-    end_date: datetime = None
+    end_date: Optional[datetime] = None
     is_graduated: bool
 
     class Config:
         from_attributes = True
 
+
 class CareerHistoryDTO(BaseModel):
     company_name: str
     start_date: datetime
-    end_date: datetime = None
+    end_date: Optional[datetime] = None
     is_working: bool
-    department: str = None
-    position_title: str = None
-    main_role: str = None
+    department: Optional[str] = None
+    position_title: Optional[str] = None
+    main_role: Optional[str] = None
 
     class Config:
         from_attributes = True
+
 
 class IntroductionDTO(BaseModel):
     title: str
-    content: str = None
+    content: Optional[str] = None
 
     class Config:
         from_attributes = True
 
+
 class LicensesDTO(BaseModel):
-    license_name: str = None
-    license_agency: str = None
-    license_date: datetime = None
+    license_name: Optional[str] = None
+    license_agency: Optional[str] = None
+    license_date: Optional[datetime] = None
 
     class Config:
         from_attributes = True
