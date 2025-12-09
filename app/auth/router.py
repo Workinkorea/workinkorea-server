@@ -384,7 +384,12 @@ async def company_signup(request: CompanySignupRequest,
             company = await company_service.create_company_to_db(company_data)
             if not company:
                 return JSONResponse(content={"error": "Failed to create company"}, status_code=500)
-        
+
+        # company user 조회
+        company_user = await company_service.get_company_user_by_email(company_data['email'], company.id)
+        if company_user:
+            return JSONResponse(content={"error": "Company user already exists"}, status_code=400)
+
         # company user 생성
         company_user_data:dict = {
             "company_id": company.id,
