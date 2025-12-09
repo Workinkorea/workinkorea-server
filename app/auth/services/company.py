@@ -43,6 +43,14 @@ class CompanyService:
         
         return company_user
 
+    async def get_company_user_by_email(self, email: str, company_id: int) -> CompanyUser | None:
+        """
+        get company user by email
+        args:
+            email: str
+        """
+        return await self.company_repository.get_company_user_by_email(email, company_id)
+
 
     async def create_company_user_to_db(self, company_user_data: dict) -> CompanyUser | None:
         """
