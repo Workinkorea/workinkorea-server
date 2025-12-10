@@ -386,7 +386,7 @@ async def company_signup(request: CompanySignupRequest,
                 return JSONResponse(content={"error": "Failed to create company"}, status_code=500)
 
         # company user 조회
-        company_user = await company_service.get_company_user_by_email(company_data['email'], company.id)
+        company_user = await company_service.get_company_user_by_email(company_data['email'])
         if company_user:
             return JSONResponse(content={"error": "Company user already exists"}, status_code=400)
 
