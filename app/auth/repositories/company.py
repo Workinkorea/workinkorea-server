@@ -39,14 +39,14 @@ class CompanyRepository:
         except Exception as e:
             raise e
 
-    async def get_company_user_by_email(self, email: str, company_id: int) -> CompanyUser | None:
+    async def get_company_user_by_email(self, email: str) -> CompanyUser | None:
         """
         get company user by email
         args:
             email: str
         """
         try:
-            stmt = select(CompanyUser).where(CompanyUser.email == email, CompanyUser.company_id == company_id)
+            stmt = select(CompanyUser).where(CompanyUser.email == email)
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
         except Exception as e:
