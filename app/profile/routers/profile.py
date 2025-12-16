@@ -36,7 +36,7 @@ async def get_profile(
     return ProfileResponse.model_validate(profile)
 
 
-@router.put("")
+@router.patch("")
 async def update_profile(
     update_profile_request: UpdateProfileRequest,
     user: User = Depends(get_current_user),
@@ -44,8 +44,18 @@ async def update_profile(
 ) -> ProfileResponse:
     """
     update current user profile
+        
+    PATCH 요청 -> 일부 필드만 보내도 됨
+    보내지 않은 필드는 기존 값 유지
     """
-    updated_profile: ProfileDTO | None = await profile_service.update_profile(user.id, update_profile_request.model_dump())
+    # exclude_unset=True -> 요청에서 보내지 않은 필드는 dict에서 제외
+    # exclude_none=True -> None 값도 제외 (명시적으로 None을 보내면 업데이트됨)
+    update_data = update_profile_request.model_dump(exclude_unset=True)
+    
+    if not update_data:
+        return JSONResponse(content={"error": "no fields to update"}, status_code=400)
+    
+    updated_profile: ProfileDTO | None = await profile_service.update_profile(user.id, update_data)
     if not updated_profile:
         return JSONResponse(content={"error": "failed to update profile"}, status_code=400)
     return ProfileResponse.model_validate(updated_profile)
