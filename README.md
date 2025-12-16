@@ -27,37 +27,48 @@ cd workinkorea-server
 ### 2. .env 파일 생성
 ```bash
 # fronend url
-CLIENT_URL=yser_url
+CLIENT_URL={user_url}
+COOKIE_DOMAIN={domain_name}
 
 # email
-MAIL_USERNAME=email_username
-MAIL_PASSWORD=email_password
-MAIL_FROM=email_from
-MAIL_PORT=email_port
-MAIL_SERVER=email_server
-MAIL_STARTTLS=False
-MAIL_SSL_TLS=True
-USE_CREDENTIALS=True
-VALIDATE_CERTS=True
+MAIL_USERNAME={mail_username}
+MAIL_PASSWORD={mail_passwd}
+MAIL_FROM_NAME={mail_from_name}
+MAIL_FROM={mail_from}
+MAIL_PORT={mail_port}
+MAIL_SERVER={mail_server}
 
 # db
-DATABASE_ASYNC_URL=postgresql+asyncpg://user:password@host:port/database_name
-DATABASE_SYNC_URL=postgresql://user:password@host:port/database_name
+DATABASE_ASYNC_URL=postgresql+asyncpg://{user}:{password}@{host}:{port}/{database_name}
+DATABASE_SYNC_URL=postgresql://{user}:{password}@{host}:{port}/{database_name}
 
 # google 
-GOOGLE_CLIENT_ID=google_client_id
-GOOGLE_CLIENT_SECRET=google_client_secret
-GOOGLE_REDIRECT_URI=google_redirect_uri
-GOOGLE_AUTHORIZATION_URL=google_authorization_url
-GOOGLE_TOKEN_URL=google_token_url
-GOOGLE_USER_INFO_URL=google_user_info_url
-
+GOOGLE_CLIENT_ID={google_client_id}
+GOOGLE_CLIENT_SECRET={google_client_secret}
+GOOGLE_REDIRECT_URI={google_redirect_uri}
+GOOGLE_AUTHORIZATION_URL={google_authorization_url}
+GOOGLE_TOKEN_URL={google_token_url}
+GOOGLE_USER_INFO_URL={google_user_info_url}
 
 # JWT
-JWT_SECRET=jwt_secret
-JWT_ALGORITHM=jwt_algorithm
-ACCESS_TOKEN_EXPIRE_MINUTES=access_token_expire_minutes
-REFRESH_TOKEN_EXPIRE_MINUTES=refresh_token_expire_minutes
+JWT_SECRET={jwt_secret}
+JWT_ALGORITHM={jwt_algorithm}
+ACCESS_TOKEN_EXPIRE_MINUTES={access_token_expire_minutes}
+REFRESH_TOKEN_EXPIRE_MINUTES={refresh_token_expire_minutes}
+
+# MINIO
+MINIO_ENDPOINT={minio_endpoint}
+MINIO_ACCESS_KEY={minio_access}
+MINIO_SECRET_KEY={minio_secret}
+MINIO_BUCKET_NAME={minio_bucket}
+
+
+# ADMIN JWT (어드민 전용 토큰 시스템)
+ADMIN_JWT_SECRET={admin_secret}
+ADMIN_JWT_ALGORITHM={admin_algo}
+ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES={admin_access_token_expire_minutes}
+ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES={admin_refresh_token_expire_minutes}
+ADMIN_EMAILS={admin_emails}
 ```
 
 ### 3. 가상환경(선택)
