@@ -41,7 +41,7 @@ async def get_account_config(
     return AccountConfigResponse.model_validate(account_config)
 
 
-@router.put("")
+@router.patch("")
 async def update_account_config(
     update_account_config_request: UpdateAccountConfigRequest,
     user: User = Depends(get_current_user),
@@ -49,8 +49,18 @@ async def update_account_config(
 ) -> AccountConfigResponse:
     """
     update current user account config
+    
+    PATCH 요청 -> 일부 필드만 보내도 됨
+    보내지 않은 필드는 기존 값 유지
     """
-    updated_account_config: AccountConfigDTO = await account_config_service.update_account_config(user.id, update_account_config_request.model_dump())
+    # exclude_unset=True -> 요청에서 보내지 않은 필드는 dict에서 제외
+    # exclude_none=True -> None 값도 제외 (명시적으로 None을 보내면 업데이트됨)
+    update_data = update_account_config_request.model_dump(exclude_unset=True)
+    
+    if not update_data:
+        return JSONResponse(content={"error": "no fields to update"}, status_code=400)
+    
+    updated_account_config: AccountConfigDTO = await account_config_service.update_account_config(user.id, update_data)
     if not updated_account_config:
         return JSONResponse(content={"error": "failed to update account config"}, status_code=400)
     return AccountConfigResponse.model_validate(updated_account_config)
