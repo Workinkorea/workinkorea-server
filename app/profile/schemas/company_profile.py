@@ -10,7 +10,7 @@ class CompanyProfileDTO(BaseModel):
     establishment_date: datetime.date
     company_type: str
     insurance: str
-    phone_number: int
+    phone_number: str
     address: str
     website_url: str
     email: str
@@ -25,7 +25,7 @@ class CompanyProfileRequest(BaseModel):
     establishment_date: datetime.date
     company_type: str
     insurance: str
-    phone_number: int
+    phone_number: str
     address: str
     website_url: str
     email: str
@@ -41,7 +41,7 @@ class CompanyProfileResponse(BaseModel):
     establishment_date: datetime.date
     company_type: str
     insurance: str
-    phone_number: int
+    phone_number: str
     address: str
     website_url: str
     email: str
