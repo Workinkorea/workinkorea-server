@@ -32,13 +32,7 @@ async def get_company_profile(
     """
     try: 
         company_profile = await company_profile_service.get_company_profile_by_company_id(company.id)
-        return CompanyProfileResponse(
-            industry_type=company_profile.industry_type,
-            employee_count=company_profile.employee_count,
-            establishment_date=company_profile.establishment_date,
-            company_type=company_profile.company_type,
-            insurance=company_profile.insurance,
-        )
+        return CompanyProfileResponse.model_validate(company_profile)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
     
