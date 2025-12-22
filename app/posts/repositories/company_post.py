@@ -3,7 +3,6 @@ from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.posts.models.company_post import CompanyPost
 
-
 class CompanyPostRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -15,8 +14,7 @@ class CompanyPostRepository:
             company_id: int
         """
         try:
-            stmt = select(CompanyPost).where(
-                CompanyPost.company_id == company_id)
+            stmt = select(CompanyPost).where(CompanyPost.company_id == company_id)
             result = await self.session.execute(stmt)
             return result.scalars().all()
         except Exception as e:
@@ -42,8 +40,7 @@ class CompanyPostRepository:
             company_post_data: dict
         """
         try:
-            stmt = insert(CompanyPost).values(
-                company_post_data).returning(CompanyPost)
+            stmt = insert(CompanyPost).values(company_post_data).returning(CompanyPost)
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
         except Exception as e:
@@ -56,8 +53,7 @@ class CompanyPostRepository:
             company_post_data: dict
         """
         try:
-            stmt = update(CompanyPost).values(company_post_data).where(
-                CompanyPost.id == company_post_data['id']).returning(CompanyPost)
+            stmt = update(CompanyPost).values(company_post_data).where(CompanyPost.id == company_post_data['id']).returning(CompanyPost)
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
         except Exception as e:
@@ -73,19 +69,5 @@ class CompanyPostRepository:
             await self.session.delete(company_post)
             await self.session.commit()
             return True
-        except Exception as e:
-            raise e
-
-    async def get_company_posts(self, skip: int = 0, limit: int = 100) -> list[CompanyPost] | None:
-        """
-        get company posts
-        args:
-            skip: int
-            limit: int
-        """
-        try:
-            stmt = select(CompanyPost).offset(skip).limit(limit)
-            result = await self.session.execute(stmt)
-            return result.scalars().all()
         except Exception as e:
             raise e

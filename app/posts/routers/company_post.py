@@ -12,7 +12,7 @@ from app.posts.services.company_post import CompanyPostService
 from app.auth.services.company import CompanyService
 from app.profile.services.position import PositionService
 
-from app.posts.schemas.request import CompanyPostRequest, CompanyPostListRequest
+from app.posts.schemas.request import CompanyPostRequest
 from app.posts.schemas.response import CompanyPostResponse
 
 router = APIRouter(
@@ -20,48 +20,18 @@ router = APIRouter(
     tags=["company-post"]
 )
 
-
 def get_company_post_service(session: AsyncSession = Depends(get_async_session)):
     return CompanyPostService(session)
-
 
 def get_company_service(session: AsyncSession = Depends(get_async_session)):
     return CompanyService(session)
 
-
 def get_position_service(session: AsyncSession = Depends(get_async_session)):
     return PositionService(session)
 
-@router.get("/list")
-async def get_list_company_posts(
-    skip: int = 0,
-    limit: int = 100,
-    company_post_service: CompanyPostService = Depends(
-        get_company_post_service),
-):
-    """
-    get list company posts
-    """
-    try:
-        company_posts = await company_post_service.get_list_company_posts(skip, limit)
-        return JSONResponse(
-            content={
-                "company_posts": company_posts,
-                "pagination": {
-                    "skip": skip,
-                    "limit": limit,
-                    "count": len(company_posts)
-                }
-            },
-            status_code=200
-        )
-    except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
 @router.get("")
 async def get_list_company_posts(
-    company_post_service: CompanyPostService = Depends(
-        get_company_post_service),
+    company_post_service: CompanyPostService = Depends(get_company_post_service),
     company: Company = Depends(get_current_company_user)
 ):
     """
@@ -74,12 +44,10 @@ async def get_list_company_posts(
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-
 @router.get("/{company_post_id}")
 async def get_company_post_by_company_post_id(
     company_post_id: int,
-    company_post_service: CompanyPostService = Depends(
-        get_company_post_service),
+    company_post_service: CompanyPostService = Depends(get_company_post_service),
 ):
     """
     get company post
@@ -90,13 +58,11 @@ async def get_company_post_by_company_post_id(
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-
 @router.post("")
 async def create_company_post(
     payload: CompanyPostRequest,
     company: Company = Depends(get_current_company_user),
-    company_post_service: CompanyPostService = Depends(
-        get_company_post_service),
+    company_post_service: CompanyPostService = Depends(get_company_post_service),
     position_service: PositionService = Depends(get_position_service)
 ):
     """
@@ -120,8 +86,7 @@ async def update_company_post(
     company_post_id: int,
     payload: CompanyPostRequest,
     company: Company = Depends(get_current_company_user),
-    company_post_service: CompanyPostService = Depends(
-        get_company_post_service),
+    company_post_service: CompanyPostService = Depends(get_company_post_service),
     position_service: PositionService = Depends(get_position_service)
 ):
     """
@@ -140,13 +105,11 @@ async def update_company_post(
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-
 @router.delete("/{company_post_id}")
 async def delete_company_post(
     company_post_id: int,
     company: Company = Depends(get_current_company_user),
-    company_post_service: CompanyPostService = Depends(
-        get_company_post_service),
+    company_post_service: CompanyPostService = Depends(get_company_post_service),
 ):
     """
     delete company post
