@@ -87,3 +87,16 @@ class CompanyPostService:
             raise ValueError("You are not authorized to delete this company post")
 
         return await self.company_post_repository.delete_company_post(company_post_id)
+
+    async def get_list_company_posts(self, skip: int = 0, limit: int = 100) -> list[CompanyPostDTO] | None:
+        """
+        get list company posts
+        args:
+            skip: int
+            limit: int
+        """
+        company_posts = await self.company_post_repository.get_company_posts(skip, limit)
+        print(company_posts)
+        if not company_posts:
+            return []
+        return [CompanyPostDTO.model_validate(post).model_dump(mode="json") for post in company_posts]
