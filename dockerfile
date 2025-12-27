@@ -14,5 +14,9 @@ COPY . .
 # 포트 노출
 EXPOSE 8000
 
+# 실행 스크립트 복사
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # 실행
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/entrypoint.sh"]
