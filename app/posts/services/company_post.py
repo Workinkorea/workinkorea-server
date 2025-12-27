@@ -96,7 +96,6 @@ class CompanyPostService:
             limit: int
         """
         company_posts = await self.company_post_repository.get_company_posts(skip, limit)
-        print(company_posts)
         if not company_posts:
             return []
         return [CompanyPostDTO.model_validate(post).model_dump(mode="json") for post in company_posts]

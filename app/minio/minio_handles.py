@@ -13,7 +13,7 @@ minio_client = Minio(
     access_key=SETTINGS.MINIO_ACCESS_KEY,
     secret_key=SETTINGS.MINIO_SECRET_KEY,
     secure=True,
-    region="us-east-1"
+    # region="us-east-1"
 )
 
 
