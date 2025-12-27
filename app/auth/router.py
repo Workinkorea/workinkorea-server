@@ -287,22 +287,25 @@ async def refresh(request: Request,
         if token_type == "admin_refresh":
             # 어드민 토큰 갱신
             access_token = await auth_service.create_admin_access_token(user_email)
+            token_type = "admin_access"
         elif token_type == "refresh":
             # 일반 유저 토큰 갱신
             access_token = await auth_service.create_access_token(user_email)
+            token_type = "access"
         elif token_type == "refresh_company":
             # 회사 유저 토큰 갱신
             company_id = payload.get("company_id")
             if not company_id:
                 return JSONResponse(content={"message": "Company ID not found"}, status_code=401)
             access_token = await company_service.create_access_company_token(user_email, int(company_id))
+            token_type = "access_company"
         else:
             return JSONResponse(content={"message": "Invalid token type"}, status_code=401)
 
         if not access_token:
             return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
 
-        return JSONResponse(content={"access_token": access_token})
+        return JSONResponse(content={"access_token": access_token, "token_type": token_type})
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
@@ -381,7 +384,12 @@ async def company_signup(request: CompanySignupRequest,
             company = await company_service.create_company_to_db(company_data)
             if not company:
                 return JSONResponse(content={"error": "Failed to create company"}, status_code=500)
-        
+
+        # company user 조회
+        company_user = await company_service.get_company_user_by_email(company_data['email'])
+        if company_user:
+            return JSONResponse(content={"error": "Company user already exists"}, status_code=400)
+
         # company user 생성
         company_user_data:dict = {
             "company_id": company.id,

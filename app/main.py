@@ -27,7 +27,7 @@ app_router = APIRouter()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[SETTINGS.CLIENT_URL],
+    allow_origins=[url.strip() for url in SETTINGS.ORIGINS_URLS.split(',') if url.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

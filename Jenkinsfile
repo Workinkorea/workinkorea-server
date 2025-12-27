@@ -13,6 +13,7 @@ pipeline {
         // 환경변수 .env 설정
         COOKIE_DOMAIN = credentials('cookie-domain')
         CLIENT_URL = credentials('client-url')
+        ORIGINS_URLS = credentials('origins-urls')
 
         MAIL_USERNAME = credentials('mail-username')
         MAIL_PASSWORD = credentials('mail-password')
@@ -46,6 +47,12 @@ pipeline {
         MINIO_ACCESS_KEY = credentials('minio-access-key')
         MINIO_SECRET_KEY = credentials('minio-secret-key')
         MINIO_BUCKET_NAME = credentials('minio-bucket-name')
+
+        ADMIN_JWT_SECRET = credentials('admin-jwt-secret')
+        ADMIN_JWT_ALGORITHM = credentials('admin-jwt-algorithm')
+        ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES = credentials('admin-access-token-expire-minutes')
+        ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES = credentials('admin-refresh-token-expire-minutes')
+        ADMIN_EMAILS = credentials('admin-emails')
     }
 
     stages {
@@ -107,6 +114,7 @@ pipeline {
                         --label 'traefik.http.services.${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}.loadbalancer.server.port=${env.PORT}' \
                         -e COOKIE_DOMAIN=${env.COOKIE_DOMAIN} \
                         -e CLIENT_URL=${env.CLIENT_URL} \
+                        -e ORIGINS_URLS=${env.ORIGINS_URLS} \
                         -e DATABASE_SYNC_URL=${env.DATABASE_SYNC_URL} \
                         -e DATABASE_ASYNC_URL=${env.DATABASE_ASYNC_URL} \
                         -e REDIS_HOST=${env.REDIS_HOST} \
@@ -132,6 +140,11 @@ pipeline {
                         -e MINIO_ACCESS_KEY=${env.MINIO_ACCESS_KEY} \
                         -e MINIO_SECRET_KEY=${env.MINIO_SECRET_KEY} \
                         -e MINIO_BUCKET_NAME=${env.MINIO_BUCKET_NAME} \
+                        -e ADMIN_JWT_SECRET=${env.ADMIN_JWT_SECRET} \
+                        -e ADMIN_JWT_ALGORITHM=${env.ADMIN_JWT_ALGORITHM} \
+                        -e ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES=${env.ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES} \
+                        -e ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES=${env.ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES} \
+                        -e ADMIN_EMAILS=${env.ADMIN_EMAILS} \
                         ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
                     """
                 }
@@ -163,6 +176,7 @@ pipeline {
                                 --label 'traefik.http.services.${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}.loadbalancer.server.port=${env.PORT}' \
                                 -e COOKIE_DOMAIN=${env.COOKIE_DOMAIN} \
                                 -e CLIENT_URL=${env.CLIENT_URL} \
+                                -e ORIGINS_URLS=${env.ORIGINS_URLS} \
                                 -e DATABASE_SYNC_URL=${env.DATABASE_SYNC_URL} \
                                 -e DATABASE_ASYNC_URL=${env.DATABASE_ASYNC_URL} \
                                 -e REDIS_HOST=${env.REDIS_HOST} \
@@ -188,6 +202,11 @@ pipeline {
                                 -e MINIO_ACCESS_KEY=${env.MINIO_ACCESS_KEY} \
                                 -e MINIO_SECRET_KEY=${env.MINIO_SECRET_KEY} \
                                 -e MINIO_BUCKET_NAME=${env.MINIO_BUCKET_NAME} \
+                                -e ADMIN_JWT_SECRET=${env.ADMIN_JWT_SECRET} \
+                                -e ADMIN_JWT_ALGORITHM=${env.ADMIN_JWT_ALGORITHM} \
+                                -e ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES=${env.ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES} \
+                                -e ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES=${env.ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES} \
+                                -e ADMIN_EMAILS=${env.ADMIN_EMAILS} \
                                 ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR}
                             """
 
@@ -302,6 +321,7 @@ pipeline {
                                 --label 'traefik.http.services.${env.DOCKER_IMAGE_NAME}-${env.COLOR}.loadbalancer.server.port=${env.PORT}' \
                                 -e COOKIE_DOMAIN=${env.COOKIE_DOMAIN} \
                                 -e CLIENT_URL=${env.CLIENT_URL} \
+                                -e ORIGINS_URLS=${env.ORIGINS_URLS} \
                                 -e DATABASE_SYNC_URL=${env.DATABASE_SYNC_URL} \
                                 -e DATABASE_ASYNC_URL=${env.DATABASE_ASYNC_URL} \
                                 -e REDIS_HOST=${env.REDIS_HOST} \
@@ -327,6 +347,11 @@ pipeline {
                                 -e MINIO_ACCESS_KEY=${env.MINIO_ACCESS_KEY} \
                                 -e MINIO_SECRET_KEY=${env.MINIO_SECRET_KEY} \
                                 -e MINIO_BUCKET_NAME=${env.MINIO_BUCKET_NAME} \
+                                -e ADMIN_JWT_SECRET=${env.ADMIN_JWT_SECRET} \
+                                -e ADMIN_JWT_ALGORITHM=${env.ADMIN_JWT_ALGORITHM} \
+                                -e ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES=${env.ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES} \
+                                -e ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES=${env.ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES} \
+                                -e ADMIN_EMAILS=${env.ADMIN_EMAILS} \
                                 ${env.DOCKER_IMAGE_NAME}-${env.COLOR}
                         """
                         echo "Successfully rolled back to ${env.COLOR} container"

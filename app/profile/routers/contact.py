@@ -37,7 +37,7 @@ async def get_contact(
     return ContactResponse.model_validate(contact)
 
 
-@router.put("")
+@router.patch("")
 async def update_contact(
     update_contact_request: UpdateContactRequest,
     user: User = Depends(get_current_user),
@@ -45,8 +45,18 @@ async def update_contact(
 ) -> ContactResponse:
     """
     update current user contact
+
+    PATCH 요청 -> 일부 필드만 보내도 됨
+    보내지 않은 필드는 기존 값 유지
     """
-    updated_contact: ContactDTO = await contact_service.update_contact(user.id, update_contact_request.model_dump())
+    # exclude_unset=True -> 요청에서 보내지 않은 필드는 dict에서 제외
+    # exclude_none=True -> None 값도 제외 (명시적으로 None을 보내면 업데이트됨)
+    update_data = update_contact_request.model_dump(exclude_unset=True)
+    
+    if not update_data:
+        return JSONResponse(content={"error": "no fields to update"}, status_code=400)
+    
+    updated_contact: ContactDTO = await contact_service.update_contact(user.id, update_data)
     if not updated_contact:
         return JSONResponse(content={"error": "failed to update contact"}, status_code=400)
     return ContactResponse.model_validate(updated_contact)

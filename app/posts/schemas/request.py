@@ -19,6 +19,10 @@ class CompanyPostRequest(BaseModel):
     class Config:
         from_attributes = True
 
+class CompanyPostListRequest(BaseModel):
+    skip: int
+    limit: int
+
 class ResumeRequest(BaseModel):
     title: str
     profile_url: str = None
