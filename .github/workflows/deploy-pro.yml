@@ -73,7 +73,8 @@ jobs:
             --region ${{ env.REGION }} \
             --platform managed \
             --vpc-connector workinkorea-vpc-con \
-            --vpc-egress private-ranges-only \
+            --vpc-egress all \
+            --ingress internal \
             --allow-unauthenticated \
             --port 8000 \
             --env-vars-file env.yaml
