@@ -29,3 +29,20 @@ async def get_all_companies(
         return companies
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@router.get("/{company_id}", response_model=CompanyResponse)
+async def get_company_by_id(
+    company_id: int,
+    company_service: AdminCompanyService = Depends(get_company_service)
+):
+    """
+    회사 상세 조회 (일반 사용자용)
+    """
+    try:
+        company = await company_service.get_company_by_id(company_id)
+        return company
+    except ValueError as e:
+        return JSONResponse(content={"error": str(e)}, status_code=404)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
