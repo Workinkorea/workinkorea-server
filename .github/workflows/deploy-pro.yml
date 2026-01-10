@@ -21,6 +21,19 @@ jobs:
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: database migration
+        run: |
+          pip install --upgrade pip
+          pip install alembic asyncpg psycopg2-binary sqlalchemy python-dotenv
+          wget https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64 -O cloud-sql-proxy
+          chmod +x cloud-sql-proxy
+          ./cloud-sql-proxy workinkorea-main:asia-northeast3:workinkorea-postgresql &
+          sleep 10
+          export DATABASE_SYNC_URL="${{ secrets.DATABASE_SYNC_URL }}"
+          alembic upgrade head
+          pkill cloud-sql-proxy
+      
       
       - name: Build and Push Container
         run: |
