@@ -21,6 +21,19 @@ jobs:
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: database migration
+        run: |
+          pip install --upgrade pip
+          pip install alembic asyncpg psycopg2-binary sqlalchemy python-dotenv
+          wget https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64 -O cloud-sql-proxy
+          chmod +x cloud-sql-proxy
+          ./cloud-sql-proxy workinkorea-main:asia-northeast3:workinkorea-postgresql &
+          sleep 10
+          export DATABASE_SYNC_URL="${{ secrets.DATABASE_SYNC_URL }}"
+          alembic upgrade head
+          pkill cloud-sql-proxy
+      
       
       - name: Build and Push Container
         run: |
@@ -28,46 +41,74 @@ jobs:
           docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
           docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
       
+      - name: Create environment variables file
+        run: |
+          cat > env.yaml << 'EOF'
+          COOKIE_DOMAIN: "${{ secrets.COOKIE_DOMAIN }}"
+          CLIENT_URL: "${{ secrets.CLIENT_URL }}"
+          ORIGINS_URLS: "${{ secrets.ORIGINS_URLS }}"
+          DATABASE_SYNC_URL: "${{ secrets.DATABASE_SYNC_URL }}"
+          DATABASE_ASYNC_URL: "${{ secrets.DATABASE_ASYNC_URL }}"
+          REDIS_HOST: "${{ secrets.REDIS_HOST }}"
+          REDIS_PORT: "${{ secrets.REDIS_PORT }}"
+          REDIS_DB: "${{ secrets.REDIS_DB }}"
+          GOOGLE_CLIENT_ID: "${{ secrets.GOOGLE_CLIENT_ID }}"
+          GOOGLE_CLIENT_SECRET: "${{ secrets.GOOGLE_CLIENT_SECRET }}"
+          GOOGLE_REDIRECT_URI: "${{ secrets.GOOGLE_REDIRECT_URI }}"
+          GOOGLE_AUTHORIZATION_URL: "${{ secrets.GOOGLE_AUTHORIZATION_URL }}"
+          GOOGLE_TOKEN_URL: "${{ secrets.GOOGLE_TOKEN_URL }}"
+          GOOGLE_USER_INFO_URL: "${{ secrets.GOOGLE_USER_INFO_URL }}"
+          JWT_SECRET: "${{ secrets.JWT_SECRET }}"
+          JWT_ALGORITHM: "${{ secrets.JWT_ALGORITHM }}"
+          ACCESS_TOKEN_EXPIRE_MINUTES: "${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}"
+          REFRESH_TOKEN_EXPIRE_MINUTES: "${{ secrets.REFRESH_TOKEN_EXPIRE_MINUTES }}"
+          MAIL_USERNAME: "${{ secrets.MAIL_USERNAME }}"
+          MAIL_PASSWORD: "${{ secrets.MAIL_PASSWORD }}"
+          MAIL_FROM_NAME: "${{ secrets.MAIL_FROM_NAME }}"
+          MAIL_FROM: "${{ secrets.MAIL_FROM }}"
+          MAIL_PORT: "${{ secrets.MAIL_PORT }}"
+          MAIL_SERVER: "${{ secrets.MAIL_SERVER }}"
+          MINIO_ENDPOINT: "${{ secrets.MINIO_ENDPOINT }}"
+          MINIO_ACCESS_KEY: "${{ secrets.MINIO_ACCESS_KEY }}"
+          MINIO_SECRET_KEY: "${{ secrets.MINIO_SECRET_KEY }}"
+          MINIO_BUCKET_NAME: "${{ secrets.MINIO_BUCKET_NAME }}"
+          ADMIN_JWT_SECRET: "${{ secrets.ADMIN_JWT_SECRET }}"
+          ADMIN_JWT_ALGORITHM: "${{ secrets.ADMIN_JWT_ALGORITHM }}"
+          ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES: "${{ secrets.ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES }}"
+          ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES: "${{ secrets.ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES }}"
+          ADMIN_EMAILS: "${{ secrets.ADMIN_EMAILS }}"
+          EOF
+      
       - name: Deploy to Google Cloud Run
         run: |
           gcloud run deploy ${{ env.IMAGE_NAME }} \
             --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --region ${{ env.REGION }} \
             --platform managed \
-            --vpc-connector workinkorea-con \
-            --vpc-egress private-ranges-only \
-            --port 8000 \
+            --vpc-connector workinkorea-vpc-con \
+            --vpc-egress all \
+            --ingress internal \
             --allow-unauthenticated \
-            --set-env-vars "^:^COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }},\
-            CLIENT_URL=${{ secrets.CLIENT_URL }},\
-            ORIGINS_URLS=${{ secrets.ORIGINS_URLS }},\
-            DATABASE_SYNC_URL=${{ secrets.DATABASE_SYNC_URL }},\
-            DATABASE_ASYNC_URL=${{ secrets.DATABASE_ASYNC_URL }},\
-            REDIS_HOST=${{ secrets.REDIS_HOST }},\
-            REDIS_PORT=${{ secrets.REDIS_PORT }},\
-            REDIS_DB=${{ secrets.REDIS_DB }},\
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }},\
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }},\
-            GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }},\
-            GOOGLE_AUTHORIZATION_URL=${{ secrets.GOOGLE_AUTHORIZATION_URL }},\
-            GOOGLE_TOKEN_URL=${{ secrets.GOOGLE_TOKEN_URL }},\
-            GOOGLE_USER_INFO_URL=${{ secrets.GOOGLE_USER_INFO_URL }},\
-            JWT_SECRET=${{ secrets.JWT_SECRET }},\
-            JWT_ALGORITHM=${{ secrets.JWT_ALGORITHM }},\
-            ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }},\
-            REFRESH_TOKEN_EXPIRE_MINUTES=${{ secrets.REFRESH_TOKEN_EXPIRE_MINUTES }},\
-            MAIL_USERNAME=${{ secrets.MAIL_USERNAME }},\
-            MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }},\
-            MAIL_FROM_NAME=${{ secrets.MAIL_FROM_NAME }},\
-            MAIL_FROM=${{ secrets.MAIL_FROM }},\
-            MAIL_PORT=${{ secrets.MAIL_PORT }},\
-            MAIL_SERVER=${{ secrets.MAIL_SERVER }},\
-            MINIO_ENDPOINT=${{ secrets.MINIO_ENDPOINT }},\
-            MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }},\
-            MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }},\
-            MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }},\
-            ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }},\
-            ADMIN_JWT_ALGORITHM=${{ secrets.ADMIN_JWT_ALGORITHM }},\
-            ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES }},\
-            ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES=${{ secrets.ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES }},\
-            ADMIN_EMAILS=${{ secrets.ADMIN_EMAILS }}"
+            --port 8000 \
+            --env-vars-file env.yaml
+
+      # discord notification
+      - name: send success message
+        if: success()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: ${{ job.status }}
+          title: "Workinkorea-Server-Production"
+          description: |
+            **Image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}**
+      
+      - name: send failure message
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: ${{ job.status }}
+          title: "Workinkorea-Server-Production"
+          description: |
+            **Image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}**
