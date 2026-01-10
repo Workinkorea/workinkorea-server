@@ -25,13 +25,16 @@ jobs:
       - name: database migration
         run: |
           pip install --upgrade pip
-          pip install alembic asyncpg psycopg2-binary sqlalchemy python-dotenv pydantic-settings pydantic
+          pip install alembic asyncpg psycopg2-binary sqlalchemy python-dotenv pydantic-settings pydantic redis
           wget https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64 -O cloud-sql-proxy
           chmod +x cloud-sql-proxy
           ./cloud-sql-proxy workinkorea-main:asia-northeast3:workinkorea-postgresql &
           sleep 10
           export DATABASE_SYNC_URL="${{ secrets.DATABASE_SYNC_URL }}"
           export DATABASE_ASYNC_URL="${{ secrets.DATABASE_ASYNC_URL }}"
+          export REDIS_HOST="${{ secrets.REDIS_HOST }}"
+          export REDIS_PORT="${{ secrets.REDIS_PORT }}"
+          export REDIS_DB="${{ secrets.REDIS_DB }}"
           alembic upgrade head
           pkill cloud-sql-proxy
       
