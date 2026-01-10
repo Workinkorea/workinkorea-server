@@ -31,6 +31,7 @@ jobs:
           ./cloud-sql-proxy workinkorea-main:asia-northeast3:workinkorea-postgresql &
           sleep 10
           export DATABASE_SYNC_URL="${{ secrets.DATABASE_SYNC_URL }}"
+          export DATABASE_ASYNC_URL="${{ secrets.DATABASE_ASYNC_URL }}"
           alembic upgrade head
           pkill cloud-sql-proxy
       
