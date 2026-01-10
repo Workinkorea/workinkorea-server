@@ -63,12 +63,12 @@ pipeline {
                 script {
 
                     def blueRunning = sh(
-                        script: "docker ps -aq -f 'name=workinkorea-server-blue'",
+                        script: "docker ps -q -f 'name=workinkorea-server-blue'",
                         returnStdout: true
                     ).trim()
 
                     def greenRunning = sh(
-                        script: "docker ps -aq -f 'name=workinkorea-server-green'",
+                        script: "docker ps -q -f 'name=workinkorea-server-green'",
                         returnStdout: true
                     ).trim()
                     
@@ -285,8 +285,8 @@ pipeline {
             script {
                 sh """
                     docker stop ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
-                    docker container prune -f || true
-                    docker image prune -f || true
+                    docker rm ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
+                    docker rmi ${env.DOCKER_IMAGE_NAME}-${env.COLOR} || true
                     """
             }
             discordSend description: "${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} deployed successfully",
@@ -301,8 +301,8 @@ pipeline {
                 try{
                     sh """
                         docker stop ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
-                        docker container prune -f || true
-                        docker image prune -f || true
+                        docker rm ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
+                        docker rmi ${env.DOCKER_IMAGE_NAME}-${env.NEW_COLOR} || true
                         """
                     if (env.COLOR != "none") {
                         echo "Rolling back to ${env.COLOR} container..."
