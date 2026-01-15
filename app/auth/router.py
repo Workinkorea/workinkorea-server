@@ -135,7 +135,7 @@ async def login_google_callback(
         # 파라미터 user name, access token 저장
         status_massage_dict["user_id"] = user.id
         status_massage_dict["name"] = user.profile.name
-        # status_massage_dict["token"] = access_token -> 토큰은 이제 set cookie 로 전달댐
+        status_massage_dict["token"] = access_token
 
         # jwt refresh token redis 저장
         refresh_token_obj = await auth_redis_service.set_refresh_token(refresh_token, user.email)
