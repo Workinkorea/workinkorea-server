@@ -135,7 +135,7 @@ async def login_google_callback(
         # 파라미터 user name, access token 저장
         status_massage_dict["user_id"] = user.id
         status_massage_dict["name"] = user.profile.name
-        status_massage_dict["token"] = access_token
+        # status_massage_dict["token"] = access_token -> 토큰은 이제 set cookie 로 전달댐
 
         # jwt refresh token redis 저장
         refresh_token_obj = await auth_redis_service.set_refresh_token(refresh_token, user.email)
@@ -148,6 +148,15 @@ async def login_google_callback(
         # jwt token 쿠키에 저장
         success_url = f"{SETTINGS.CLIENT_URL}/auth/callback?{urlencode(status_massage_dict)}"
         response = RedirectResponse(url=success_url)
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=False,  # 개발 환경에서는 secure=False
+            max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
+            samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
         response.set_cookie(
             key="refresh_token",
             value=refresh_token,
@@ -236,6 +245,10 @@ async def logout(request: Request, auth_redis_service: AuthRedisService = Depend
             key="refresh_token",
             domain=SETTINGS.COOKIE_DOMAIN
         )
+        response.delete_cookie(
+            key="access_token",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
         return response
     except Exception as e:
         return {"error": str(e)}
@@ -305,7 +318,19 @@ async def refresh(request: Request,
         if not access_token:
             return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
 
-        return JSONResponse(content={"access_token": access_token, "token_type": token_type})
+        # return JSONResponse(content={"access_token": access_token, "token_type": token_type})
+        response = JSONResponse(content={"success": True}, status_code=200)
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=False,
+            max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
+            samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
+        return response
+
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
@@ -435,11 +460,20 @@ async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
         status_massage_dict = {
             "user_id": company_user.id,
             "company_id": company_user.company_id,
-            "token": access_company_token,
+            # "token": access_company_token, -> 이제 쿠키로 감
         }
 
         url = f"{SETTINGS.CLIENT_URL}/company?{urlencode(status_massage_dict)}"
         response = JSONResponse(content={"url": url})
+        response.set_cookie(
+            key="access_token",
+            value=access_company_token,
+            httponly=True,
+            secure=False,  # 개발 환경에서는 secure=False
+            max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
+            samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
         response.set_cookie(
             key="refresh_token",
             value=refresh_company_token,
