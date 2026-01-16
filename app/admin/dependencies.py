@@ -58,7 +58,6 @@ async def get_admin_user(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Admin JWT configuration not found"
         )
-
     try:
         payload = jwt.decode(
             access_token,
@@ -73,7 +72,6 @@ async def get_admin_user(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token"
             )
-
         # 어드민 토큰 타입 체크
         if token_type != "admin_access":
             raise HTTPException(
@@ -90,33 +88,28 @@ async def get_admin_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"
         )
-
     user = await auth_repository.get_user_by_email(email)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
         )
-
     # user_gubun이 'admin'인지 체크
     if user.user_gubun != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required - invalid user type"
         )
-
     # 어드민 이메일 리스트에 있는지 체크 (이중 체크)
     if not SETTINGS.ADMIN_EMAILS:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Admin emails not configured"
         )
-
     admin_emails = [email.strip() for email in env_admin_emails.split(",")]
     if user.email not in admin_emails:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required - email not authorized"
         )
-
     return user

@@ -35,50 +35,57 @@ async def get_current_user(
     args:
         credentials: HTTPAuthorizationCredentials
     """
-    
     access_token = None
     if credentials:
         access_token = credentials.credentials
-    
     if not access_token:
         access_token = request.cookies.get("access_token")
-
     if not access_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
-    
     try:
         payload = jwt.decode(
             access_token, 
             SETTINGS.JWT_SECRET,
             algorithms=[SETTINGS.JWT_ALGORITHM]
         )
-        email: str = payload.get("sub")
-        if not email:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Access token expired"
         )
+    except jwt.InvalidSignatureError: # 어드민 토큰으로 일반 유저 api 쓰려고 할 때 발생할 수도 있음
+        try: # 어드민 시크릿으로 재검증
+            payload = jwt.decode(
+                access_token, 
+                SETTINGS.ADMIN_JWT_SECRET,
+                algorithms=[SETTINGS.ADMIN_JWT_ALGORITHM]
+            )
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token signature"
+            )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token : {e}"
+            # detail=f"Invalid token: {e}" -> 프로덕션 환경에서는 예외 상세메세지를 숨기는 편이 좋음
+            detail=f"Invalid token"
         )
-    
+    email: str = payload.get("sub")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
     user = await auth_repository.get_user_by_email(email)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
         )
-    
     return user
 
 
