@@ -26,7 +26,8 @@ def get_company_repository(
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
     auth_repository: AuthRepository = Depends(get_auth_repository)
 ) -> User:
     """
@@ -34,7 +35,13 @@ async def get_current_user(
     args:
         credentials: HTTPAuthorizationCredentials
     """
-    access_token = credentials.credentials
+    
+    access_token = None
+    if credentials:
+        access_token = credentials.credentials
+    
+    if not access_token:
+        access_token = request.cookies.get("access_token")
 
     if not access_token:
         raise HTTPException(

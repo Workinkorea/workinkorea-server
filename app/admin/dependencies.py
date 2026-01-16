@@ -1,6 +1,6 @@
 import jwt
 from app.auth.models import User
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from app.core.settings import SETTINGS
 from app.database import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +22,8 @@ def get_auth_repository(
 
 
 async def get_admin_user(
-    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
     auth_repository: AuthRepository = Depends(get_auth_repository)
 ) -> User:
     """
@@ -36,7 +37,13 @@ async def get_admin_user(
     raises:
         HTTPException
     """
-    access_token = credentials.credentials
+    access_token = None
+    if credentials:
+        access_token = credentials.credentials
+    
+    if not access_token:
+        access_token = request.cookies.get("access_token")
+
     env_admin_emails: str = SETTINGS.ADMIN_EMAILS
 
     if not access_token:
