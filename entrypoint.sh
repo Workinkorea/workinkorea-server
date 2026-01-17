@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+# start redis
+redis-server /etc/redis/redis.conf --daemonize yes
+
 # database migration
 # uv run alembic upgrade head
 
