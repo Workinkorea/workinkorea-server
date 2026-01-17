@@ -122,8 +122,6 @@ async def login_google_callback(
             url = f"{SETTINGS.CLIENT_URL}/signup?{status_massage}"
             return RedirectResponse(url=url)
 
-        status_massage_dict = {"status": "success", "message": "Login successful"}
-
         # user_gubun 체크해서 어드민이면 어드민 토큰 발급하고 아님녀 유저 토큰 발급
         if user.user_gubun == "admin":
             access_token = await auth_service.create_admin_access_token(user.email)
@@ -137,11 +135,11 @@ async def login_google_callback(
         if not refresh_token_obj:
             status_massage = urlencode(
                 {"status": "error", "message": "Failed to create refresh token"})
-            url = f"{SETTINGS.CLIENT_URL}/auth/callback?{status_massage}"
+            url = f"{SETTINGS.CLIENT_URL}/login?{status_massage}"
             return RedirectResponse(url=url)
 
         # jwt token 쿠키에 저장
-        success_url = f"{SETTINGS.CLIENT_URL}/auth/callback?{urlencode(status_massage_dict)}"
+        success_url = f"{SETTINGS.CLIENT_URL}"
         response = RedirectResponse(url=success_url)
         response.set_cookie(
             key="access_token",
@@ -174,7 +172,7 @@ async def login_google_callback(
         return response
     except Exception as e:
         status_massage = urlencode({"status": "error", "message": str(e)})
-        url = f"{SETTINGS.CLIENT_URL}/auth/callback?{status_massage}"
+        url = f"{SETTINGS.CLIENT_URL}/login?{status_massage}"
         return RedirectResponse(url=url)
 
 
@@ -466,19 +464,20 @@ async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
         }
         company_user = await company_service.company_user_login(company_data)
         if company_user is None:
-            return JSONResponse(content={"error": "Company user not found"}, status_code=400)
+            redirect_url = f"{SETTINGS.CLIENT_URL}/company-login"
+            return RedirectResponse(url=redirect_url)
+            # return JSONResponse(content={"error": "Company user not found"}, status_code=400)
 
         access_company_token = await company_service.create_access_company_token(company_user.email, company_user.company_id)
         refresh_company_token = await company_service.create_refresh_company_token(company_user.email, company_user.company_id)
 
         refresh_company_token_redis = await auth_redis_service.set_refresh_token(refresh_company_token, company_user.email)
         if not refresh_company_token_redis:
-            return JSONResponse(content={"error": "Failed to set refresh company token"}, status_code=500)
+            redirect_url = f"{SETTINGS.CLIENT_URL}/company-login"
+            return RedirectResponse(url=redirect_url)
+            # return JSONResponse(content={"error": "Failed to set refresh company token"}, status_code=500)
 
-        status_massage_dict = {"status": "success", "message": "Login successful"}
-
-        url = f"{SETTINGS.CLIENT_URL}/company?{urlencode(status_massage_dict)}"
-        response = JSONResponse(content={"url": url})
+        response = RedirectResponse(url=f"{SETTINGS.CLIENT_URL}/company")
         response.set_cookie(
             key="access_token",
             value=access_company_token,
