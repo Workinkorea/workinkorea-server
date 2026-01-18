@@ -5,7 +5,7 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: asia-northeast3
+  REGION: asia-northeast1
   REPO_NAME: docker-repo
   IMAGE_NAME: workinkorea-server-pro
 
