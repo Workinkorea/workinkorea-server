@@ -252,6 +252,10 @@ async def logout(request: Request, auth_redis_service: AuthRedisService = Depend
             key="access_token",
             domain=SETTINGS.COOKIE_DOMAIN
         )
+        response.delete_cookie(
+            key="userType",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
         return response
     except Exception as e:
         return {"error": str(e)}
