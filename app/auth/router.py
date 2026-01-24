@@ -469,7 +469,7 @@ async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
         company_user = await company_service.company_user_login(company_data)
         if company_user is None:
             redirect_url = f"{SETTINGS.CLIENT_URL}/company-login"
-            return RedirectResponse(url=redirect_url)
+            return JSONResponse(content={"url": redirect_url}, status_code=401)
 
         access_company_token = await company_service.create_access_company_token(company_user.email, company_user.company_id)
         refresh_company_token = await company_service.create_refresh_company_token(company_user.email, company_user.company_id)
@@ -477,10 +477,10 @@ async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
         refresh_company_token_redis = await auth_redis_service.set_refresh_token(refresh_company_token, company_user.email)
         if not refresh_company_token_redis:
             redirect_url = f"{SETTINGS.CLIENT_URL}/company-login"
-            return RedirectResponse(url=redirect_url)
+            return JSONResponse(content={"url": redirect_url}, status_code=500)
 
         success_url = f"{SETTINGS.CLIENT_URL}/company"
-        response = RedirectResponse(url=success_url)
+        response = JSONResponse(content={"url": success_url}, status_code=200)
         response.set_cookie(
             key="refresh_token",
             value=refresh_company_token,
