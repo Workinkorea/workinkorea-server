@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Work In Korea 공지 안내</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fb;
+            font-family: Arial, sans-serif;
+            color: #222;
+        }
+        .container {
+            max-width: 640px;
+            margin: 24px auto;
+            background: #ffffff;
+            border: 1px solid #e6e9ef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .header {
+            background: #1f4b99;
+            color: #fff;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 20px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .title {
+            font-size: 20px;
+            margin: 0 0 12px 0;
+            font-weight: 700;
+        }
+        .footer {
+            padding: 14px 20px;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #f0f0f0;
+            background: #fafbfe;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">Work In Korea 공지사항</div>
+    <div class="content">
+        <h1 class="title">{{ title }}</h1>
+        <div>{{ content }}</div>
+    </div>
+    <div class="footer">
+        본 메일은 Work In Korea 알림 설정에 따라 발송되었습니다.
+    </div>
+</div>
+</body>
+</html>

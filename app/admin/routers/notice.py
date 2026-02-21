@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
 from app.admin.dependencies import get_admin_user
 from app.admin.services.notice import AdminNoticeService
+from app.admin.services.email import EmailService
 from app.admin.schemas.notice import NoticeCreate, NoticeUpdate, NoticeResponse
+from app.admin.schemas.email import BulkEmailSendResponse
 from app.auth.models import User
 
 
@@ -18,20 +20,61 @@ def get_admin_notice_service(session: AsyncSession = Depends(get_async_session))
     return AdminNoticeService(session)
 
 
+def get_email_service(session: AsyncSession = Depends(get_async_session)):
+    return EmailService(session)
+
+
 @router.post("/", response_model=NoticeResponse)
 async def create_notice(
     payload: NoticeCreate,
+    background_tasks: BackgroundTasks,
     admin_user: User = Depends(get_admin_user),
-    notice_service: AdminNoticeService = Depends(get_admin_notice_service)
+    notice_service: AdminNoticeService = Depends(get_admin_notice_service),
+    email_service: EmailService = Depends(get_email_service)
 ):
     """
     공지사항 작성
     """
     try:
-        notice_data = payload.model_dump()
-        # 이메일 전송 여기 넣어야 할 수 있음
+        notice_data = payload.model_dump(exclude={"send_email"})
         notice = await notice_service.create_notice(notice_data, admin_user.id)
+
+        # 공지 생성 시 옵션으로 단체 메일 발송하기
+        if payload.send_email and notice.is_active:
+            background_tasks.add_task(
+                email_service.send_notice_email_to_opted_users,
+                notice.title,
+                notice.content,
+            )
+
         return notice
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@router.post("/{notice_id}/email/send", response_model=BulkEmailSendResponse)
+async def send_notice_email(
+    notice_id: int,
+    admin_user: User = Depends(get_admin_user),
+    notice_service: AdminNoticeService = Depends(get_admin_notice_service),
+    email_service: EmailService = Depends(get_email_service),
+):
+    """
+    특정 공지사항을 이메일로 단체 발송
+    """
+    try:
+        notice = await notice_service.get_notice_by_id(notice_id)
+
+        if not notice.is_active:
+            return JSONResponse(content={"error": "Inactive notice cannot be sent"}, status_code=400)
+
+        sent_count = await email_service.send_notice_email_to_opted_users(notice.title, notice.content)
+        return BulkEmailSendResponse(
+            message="Notice email sent successfully",
+            sent_count=sent_count,
+        )
+    except ValueError as e:
+        return JSONResponse(content={"error": str(e)}, status_code=404)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 

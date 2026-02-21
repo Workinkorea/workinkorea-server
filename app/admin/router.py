@@ -2,6 +2,8 @@ from fastapi import APIRouter
 from app.admin.routers.user import router as user_router
 from app.admin.routers.company import router as company_router
 from app.admin.routers.company_post import router as company_post_router
+from app.admin.routers.notice import router as notice_router
+from app.admin.routers.email import router as email_router
 
 
 """
@@ -17,3 +19,5 @@ router = APIRouter(
 router.include_router(user_router)
 router.include_router(company_router)
 router.include_router(company_post_router)
+router.include_router(notice_router)
+router.include_router(email_router)

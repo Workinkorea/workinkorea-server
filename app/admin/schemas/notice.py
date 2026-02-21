@@ -8,7 +8,7 @@ class NoticeBase(BaseModel):
     is_active: bool = True
 
 class NoticeCreate(NoticeBase):
-    pass
+    send_email: bool = False
 
 class NoticeUpdate(BaseModel):
     title: Optional[str] = None
