@@ -9,8 +9,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Redis 설정 (localhost만 접근 가능하도록)
-RUN sed -i 's/bind 127.0.0.1 ::1/bind 127.0.0.1/' /etc/redis/redis.conf && \
-    sed -i 's/protected-mode yes/protected-mode no/' /etc/redis/redis.conf
+# RUN sed -i 's/bind 127.0.0.1 ::1/bind 127.0.0.1/' /etc/redis/redis.conf && \
+#     sed -i 's/protected-mode yes/protected-mode no/' /etc/redis/redis.conf
 
 # 의존성 파일 복사
 COPY pyproject.toml uv.lock ./

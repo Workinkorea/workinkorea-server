@@ -64,6 +64,7 @@ jobs:
               --label "traefik.http.routers.${IMAGE_NAME}.entrypoints=websecure" \
               --label "traefik.http.routers.${IMAGE_NAME}.tls.certresolver=le" \
               --label "traefik.http.services.${IMAGE_NAME}.loadbalancer.server.port=${PORT}" \
+              --label "traefik.http.auth.basic.${IMAGE_NAME}.users=${{ secrets.TRAEFIK_BASIC_AUTH_USERS }}" \
               -e COOKIE_DOMAIN="${{ secrets.COOKIE_DOMAIN }}" \
               -e CLIENT_URL="${{ secrets.CLIENT_URL }}" \
               -e ORIGINS_URLS="${{ secrets.ORIGINS_URLS }}" \
