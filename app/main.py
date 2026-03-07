@@ -21,7 +21,10 @@ app = FastAPI(
     contact={
         "name": "WorkinKorea",
         "url": "https://workinkorea.net",
-    }
+    },
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+    redoc_url="/api/redoc",
 )
 app_router = APIRouter()
 
