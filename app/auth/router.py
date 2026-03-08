@@ -117,12 +117,11 @@ async def login_google_callback(
         if not user:
             # user 조회 실패
             status_massage = urlencode({
-                "user_email": user_info_data['email']
+                "status": "error",
+                "message": "User not found"
             })
             url = f"{SETTINGS.CLIENT_URL}/signup?{status_massage}"
             return RedirectResponse(url=url)
-
-        status_massage_dict = {"status": "success", "user_email": user.email}
 
         # user_gubun 체크해서 어드민이면 어드민 토큰 발급하고 아님녀 유저 토큰 발급
         if user.user_gubun == "admin":
@@ -132,21 +131,16 @@ async def login_google_callback(
             access_token = await auth_service.create_access_token(user.email)
             refresh_token = await auth_service.create_refresh_token(user.email)
 
-        # 파라미터 user name, access token 저장
-        status_massage_dict["user_id"] = user.id
-        status_massage_dict["name"] = user.profile.name
-        status_massage_dict["token"] = access_token
-
         # jwt refresh token redis 저장
         refresh_token_obj = await auth_redis_service.set_refresh_token(refresh_token, user.email)
         if not refresh_token_obj:
             status_massage = urlencode(
                 {"status": "error", "message": "Failed to create refresh token"})
-            url = f"{SETTINGS.CLIENT_URL}/auth/callback?{status_massage}"
+            url = f"{SETTINGS.CLIENT_URL}/login?{status_massage}"
             return RedirectResponse(url=url)
 
         # jwt token 쿠키에 저장
-        success_url = f"{SETTINGS.CLIENT_URL}/auth/callback?{urlencode(status_massage_dict)}"
+        success_url = f"{SETTINGS.CLIENT_URL}"
         response = RedirectResponse(url=success_url)
         response.set_cookie(
             key="access_token",
@@ -166,10 +160,19 @@ async def login_google_callback(
             samesite="lax",
             domain=SETTINGS.COOKIE_DOMAIN
         )
+        response.set_cookie(
+            key="userType",
+            value=user.user_gubun,
+            httponly=False,
+            secure=False,  # 개발 환경에서는 secure=False
+            max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
+            samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
         return response
     except Exception as e:
         status_massage = urlencode({"status": "error", "message": str(e)})
-        url = f"{SETTINGS.CLIENT_URL}/auth/callback?{status_massage}"
+        url = f"{SETTINGS.CLIENT_URL}/login?{status_massage}"
         return RedirectResponse(url=url)
 
 
@@ -249,6 +252,10 @@ async def logout(request: Request, auth_redis_service: AuthRedisService = Depend
             key="access_token",
             domain=SETTINGS.COOKIE_DOMAIN
         )
+        response.delete_cookie(
+            key="userType",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
         return response
     except Exception as e:
         return {"error": str(e)}
@@ -301,10 +308,12 @@ async def refresh(request: Request,
             # 어드민 토큰 갱신
             access_token = await auth_service.create_admin_access_token(user_email)
             token_type = "admin_access"
+            user_type = "admin"
         elif token_type == "refresh":
             # 일반 유저 토큰 갱신
             access_token = await auth_service.create_access_token(user_email)
             token_type = "access"
+            user_type = "user"
         elif token_type == "refresh_company":
             # 회사 유저 토큰 갱신
             company_id = payload.get("company_id")
@@ -312,6 +321,7 @@ async def refresh(request: Request,
                 return JSONResponse(content={"message": "Company ID not found"}, status_code=401)
             access_token = await company_service.create_access_company_token(user_email, int(company_id))
             token_type = "access_company"
+            user_type = "company"
         else:
             return JSONResponse(content={"message": "Invalid token type"}, status_code=401)
 
@@ -323,6 +333,16 @@ async def refresh(request: Request,
         response.set_cookie(
             key="access_token",
             value=access_token,
+            httponly=True,
+            secure=False,
+            max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
+            samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
+        # user type 쿠키에 저장
+        response.set_cookie(
+            key="userType",
+            value=user_type,
             httponly=True,
             secure=False,
             max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -448,23 +468,28 @@ async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
         }
         company_user = await company_service.company_user_login(company_data)
         if company_user is None:
-            return JSONResponse(content={"error": "Company user not found"}, status_code=400)
+            redirect_url = f"{SETTINGS.CLIENT_URL}/company-login"
+            return JSONResponse(content={"url": redirect_url}, status_code=401)
 
         access_company_token = await company_service.create_access_company_token(company_user.email, company_user.company_id)
         refresh_company_token = await company_service.create_refresh_company_token(company_user.email, company_user.company_id)
 
         refresh_company_token_redis = await auth_redis_service.set_refresh_token(refresh_company_token, company_user.email)
         if not refresh_company_token_redis:
-            return JSONResponse(content={"error": "Failed to set refresh company token"}, status_code=500)
+            redirect_url = f"{SETTINGS.CLIENT_URL}/company-login"
+            return JSONResponse(content={"url": redirect_url}, status_code=500)
 
-        status_massage_dict = {
-            "user_id": company_user.id,
-            "company_id": company_user.company_id,
-            # "token": access_company_token, -> 이제 쿠키로 감
-        }
-
-        url = f"{SETTINGS.CLIENT_URL}/company?{urlencode(status_massage_dict)}"
-        response = JSONResponse(content={"url": url})
+        success_url = f"{SETTINGS.CLIENT_URL}/company"
+        response = JSONResponse(content={"url": success_url}, status_code=200)
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_company_token,
+            httponly=True,
+            secure=False,  # 개발 환경에서는 secure=False
+            max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
+            samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
         response.set_cookie(
             key="access_token",
             value=access_company_token,
@@ -475,11 +500,11 @@ async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
             domain=SETTINGS.COOKIE_DOMAIN
         )
         response.set_cookie(
-            key="refresh_token",
-            value=refresh_company_token,
-            httponly=True,
+            key="userType",
+            value="company",
+            httponly=False,
             secure=False,  # 개발 환경에서는 secure=False
-            max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
+            max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
             samesite="lax",
             domain=SETTINGS.COOKIE_DOMAIN
         )

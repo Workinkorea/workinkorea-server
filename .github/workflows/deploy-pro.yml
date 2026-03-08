@@ -16,18 +16,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Google Auth
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
-      
+
       - name: Build and Push Container
         run: |
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
-          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker build \
+            -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest \
+            .
           docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-      
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
+
       - name: Create environment variables file
         run: |
           cat > env.yaml << 'EOF'
@@ -65,7 +69,7 @@ jobs:
           ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES: "${{ secrets.ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES }}"
           ADMIN_EMAILS: "${{ secrets.ADMIN_EMAILS }}"
           EOF
-      
+
       - name: Deploy to Google Cloud Run
         run: |
           gcloud run deploy ${{ env.IMAGE_NAME }} \
@@ -74,12 +78,11 @@ jobs:
             --platform managed \
             --vpc-connector workinkorea-vpc-con \
             --vpc-egress all \
-            --ingress internal \
+            --ingress internal-and-cloud-load-balancing \
             --allow-unauthenticated \
             --port 8000 \
             --env-vars-file env.yaml
 
-      # discord notification
       - name: Send Discord Deployment Notification
         if: always()
         uses: sarisia/actions-status-discord@v1
