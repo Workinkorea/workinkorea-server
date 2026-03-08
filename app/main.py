@@ -13,6 +13,11 @@ from app.minio.routers import router as minio_router
 
 from app.core.settings import SETTINGS
 
+import os
+
+# production 환경에서는 docs 비활성화
+is_production = os.getenv("NODE_ENV", "dev") == "production"
+
 # app
 app = FastAPI(
     title="WorkinKorea Server",
@@ -21,8 +26,12 @@ app = FastAPI(
     contact={
         "name": "WorkinKorea",
         "url": "https://workinkorea.net",
-    }
+    },
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
 )
+
 app_router = APIRouter()
 
 app.add_middleware(
