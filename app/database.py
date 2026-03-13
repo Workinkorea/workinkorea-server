@@ -1,6 +1,6 @@
 import os
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy import MetaData, DateTime, event, create_engine, text
+from sqlalchemy import MetaData, DateTime, create_engine
 from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase, Mapped, mapped_column
 from datetime import datetime
 from app.core.settings import SETTINGS
@@ -9,34 +9,33 @@ meta = MetaData()
 
 db_schema = os.getenv("DB_SCHEMA", "public")
 
+# search_path를 URL에 직접 추가
+def get_async_url():
+    base_url = SETTINGS.DATABASE_ASYNC_URL
+    if db_schema != "public":
+        return f"{base_url}?options=-csearch_path%3D{db_schema}"
+    return base_url
+
+def get_sync_url():
+    base_url = SETTINGS.DATABASE_SYNC_URL
+    if db_schema != "public":
+        return f"{base_url}?options=-csearch_path%3D{db_schema}"
+    return base_url
+
 async_engine = create_async_engine(
-    SETTINGS.DATABASE_ASYNC_URL,
+    get_async_url(),
     echo=True,
     future=True,
 )
-
-# 비동기 엔진 연결 시 search_path 설정
-@event.listens_for(async_engine.sync_engine, "connect")
-def set_search_path_async(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute(f"SET search_path TO {db_schema}")
-    cursor.close()
 
 async_session = async_sessionmaker(
     async_engine, expire_on_commit=False, class_=AsyncSession)
 
 sync_engine = create_engine(
-    SETTINGS.DATABASE_SYNC_URL,
+    get_sync_url(),
     echo=True,
     future=True,
 )
-
-# 동기 엔진 연결 시 search_path 설정
-@event.listens_for(sync_engine, "connect")
-def set_search_path_sync(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute(f"SET search_path TO {db_schema}")
-    cursor.close()
 
 sync_session = sessionmaker(
     sync_engine, expire_on_commit=False, class_=Session)
