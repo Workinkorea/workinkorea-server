@@ -100,6 +100,7 @@ jobs:
           ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES: "${{ secrets.ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES }}"
           ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES: "${{ secrets.ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES }}"
           ADMIN_EMAILS: "${{ secrets.ADMIN_EMAILS }}"
+          DB_SCHEMA: "${{ secrets.DB_SCHEMA }}"
           EOF
 
       - name: Deploy to Google Cloud Run
