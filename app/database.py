@@ -1,3 +1,4 @@
+import os
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy import MetaData, DateTime, func, create_engine
 from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase, Mapped, mapped_column
@@ -5,12 +6,26 @@ from datetime import datetime
 from app.core.settings import SETTINGS
 
 meta = MetaData()
-async_engine = create_async_engine(SETTINGS.DATABASE_ASYNC_URL, echo=True, future=True)
+
+# dev 환경에서만 search_path 설정
+db_schema = os.getenv("DB_SCHEMA", "public")
+connect_args = {"server_settings": {"search_path": db_schema}} if db_schema != "public" else {}
+
+async_engine = create_async_engine(
+    SETTINGS.DATABASE_ASYNC_URL,
+    echo=True,
+    future=True,
+    connect_args=connect_args
+)
 async_session = async_sessionmaker(
     async_engine, expire_on_commit=False, class_=AsyncSession)
 
-
-sync_engine = create_engine(SETTINGS.DATABASE_SYNC_URL, echo=True, future=True)
+sync_engine = create_engine(
+    SETTINGS.DATABASE_SYNC_URL,
+    echo=True,
+    future=True,
+    connect_args=connect_args
+)
 sync_session = sessionmaker(
     sync_engine, expire_on_commit=False, class_=Session)
 
@@ -29,32 +44,32 @@ async def get_async_session() -> AsyncSession:
     async with async_session() as session:
         try:
             yield session
-            await session.commit() # 세션이 종료될 때 자동으로 커밋됨
+            await session.commit()
         except Exception:
-            await session.rollback() # 문제가 발생하면 자동으로 롤백됨
+            await session.rollback()
             raise
 
 
 # 베이스 모델
 class Base(DeclarativeBase):
-    created_at : Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), 
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=datetime.now(),
         nullable=False
-        )
+    )
 
-    updated_at : Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), 
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=datetime.now(),
         nullable=False
-        )
+    )
 
 
-# redis 
+# redis
 import redis.asyncio as redis
 
 async def get_redis_client() -> redis.Redis:
-   async with redis.Redis(host=SETTINGS.REDIS_HOST, port=SETTINGS.REDIS_PORT, db=SETTINGS.REDIS_DB) as client:
+    async with redis.Redis(host=SETTINGS.REDIS_HOST, port=SETTINGS.REDIS_PORT, db=SETTINGS.REDIS_DB) as client:
         try:
             yield client
         except Exception as e:
