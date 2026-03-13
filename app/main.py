@@ -27,9 +27,9 @@ app = FastAPI(
         "name": "WorkinKorea",
         "url": "https://workinkorea.net",
     },
-    docs_url=None if is_production else "/docs",
-    redoc_url=None if is_production else "/redoc",
-    openapi_url=None if is_production else "/openapi.json",
+    docs_url=None if is_production else "/api/docs",
+    redoc_url=None if is_production else "/api/redoc",
+    openapi_url=None if is_production else "/api/openapi.json",
 )
 
 app_router = APIRouter()
