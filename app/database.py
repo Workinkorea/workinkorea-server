@@ -9,32 +9,25 @@ meta = MetaData()
 
 db_schema = os.getenv("DB_SCHEMA", "public")
 
-# search_path를 URL에 직접 추가
-def get_async_url():
-    base_url = SETTINGS.DATABASE_ASYNC_URL
-    if db_schema != "public":
-        return f"{base_url}?options=-csearch_path%3D{db_schema}"
-    return base_url
-
-def get_sync_url():
-    base_url = SETTINGS.DATABASE_SYNC_URL
-    if db_schema != "public":
-        return f"{base_url}?options=-csearch_path%3D{db_schema}"
-    return base_url
+# search_path connect_args 설정
+async_connect_args = {"server_settings": {"search_path": db_schema}} if db_schema != "public" else {}
+sync_connect_args = {"options": f"-csearch_path={db_schema}"} if db_schema != "public" else {}
 
 async_engine = create_async_engine(
-    get_async_url(),
+    SETTINGS.DATABASE_ASYNC_URL,
     echo=True,
     future=True,
+    connect_args=async_connect_args,
 )
 
 async_session = async_sessionmaker(
     async_engine, expire_on_commit=False, class_=AsyncSession)
 
 sync_engine = create_engine(
-    get_sync_url(),
+    SETTINGS.DATABASE_SYNC_URL,
     echo=True,
     future=True,
+    connect_args=sync_connect_args,
 )
 
 sync_session = sessionmaker(
