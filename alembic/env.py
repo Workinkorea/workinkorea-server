@@ -1,7 +1,7 @@
 from app.database import Base
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, text
+from sqlalchemy import create_engine
 from sqlalchemy import pool
 
 from alembic import context
@@ -34,15 +34,6 @@ from app.diagnosis.models.diagnosis_answer import *
 # alembic 설정
 config = context.config
 
-# dev 스키마 설정
-db_schema = os.getenv("DB_SCHEMA", "public")
-
-# 데이터베이스 URL 설정 (search_path 포함)
-sync_url = SETTINGS.DATABASE_SYNC_URL
-if db_schema != "public":
-    sync_url = f"{sync_url}?options=-csearch_path%3D{db_schema}"
-config.set_main_option("sqlalchemy.url", sync_url)
-
 # 로깅 설정
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -50,9 +41,12 @@ if config.config_file_name is not None:
 # 베이스 모델
 target_metadata = Base.metadata
 
+# dev 스키마 설정
+db_schema = os.getenv("DB_SCHEMA", "public")
+
 
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
+    url = SETTINGS.DATABASE_SYNC_URL
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -67,13 +61,13 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    engine = create_engine(
+        SETTINGS.DATABASE_SYNC_URL,
         poolclass=pool.NullPool,
+        connect_args={"options": f"-csearch_path={db_schema}"},
     )
 
-    with connectable.connect() as connection:
+    with engine.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
