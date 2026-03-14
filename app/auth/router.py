@@ -146,7 +146,7 @@ async def login_google_callback(
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,  # 개발 환경에서는 secure=False
+            secure=True,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
             samesite="lax",
             domain=SETTINGS.COOKIE_DOMAIN
@@ -155,7 +155,7 @@ async def login_google_callback(
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            secure=False,  # 개발 환경에서는 secure=False
+            secure=True,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
             samesite="lax",
             domain=SETTINGS.COOKIE_DOMAIN
@@ -163,8 +163,8 @@ async def login_google_callback(
         response.set_cookie(
             key="userType",
             value=user.user_gubun,
-            httponly=False,
-            secure=False,  # 개발 환경에서는 secure=False
+            httponly=True,
+            secure=True,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
             samesite="lax",
             domain=SETTINGS.COOKIE_DOMAIN
