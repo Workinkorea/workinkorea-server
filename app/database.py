@@ -73,7 +73,12 @@ class Base(DeclarativeBase):
 import redis.asyncio as redis
 
 async def get_redis_client() -> redis.Redis:
-    async with redis.Redis(host=SETTINGS.REDIS_HOST, port=SETTINGS.REDIS_PORT, db=SETTINGS.REDIS_DB) as client:
+    async with redis.Redis(
+        host=SETTINGS.REDIS_HOST, 
+        port=SETTINGS.REDIS_PORT, 
+        db=SETTINGS.REDIS_DB,
+        password=SETTINGS.REDIS_PASSWORD
+    ) as client:
         try:
             yield client
         except Exception as e:
