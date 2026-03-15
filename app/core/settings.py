@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     REDIS_HOST: Optional[str] = None
     REDIS_PORT: Optional[int] = None
     REDIS_DB: Optional[int] = None
+    REDIS_PASSWORD: Optional[str] = None
 
     # google login 설정
     GOOGLE_CLIENT_ID: Optional[str] = None
