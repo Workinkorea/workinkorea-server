@@ -59,11 +59,11 @@ jobs:
             --region ${{ env.REGION }} \
             --vpc-connector workinkorea-vpc-con \
             --vpc-egress all \
-            --set-env-vars "DATABASE_SYNC_URL=${{ secrets.DATABASE_SYNC_URL }},DATABASE_ASYNC_URL=${{ secrets.DATABASE_ASYNC_URL }}" \
+            --set-env-vars "DATABASE_SYNC_URL=${{ secrets.DATABASE_SYNC_URL }},DATABASE_ASYNC_URL=${{ secrets.DATABASE_ASYNC_URL }},DB_SCHEMA=${{ secrets.DB_SCHEMA }}" \
             --command uv \
             --args "run,alembic,upgrade,head"
           gcloud run jobs execute alembic-migrate-dev --region ${{ env.REGION }} --wait
-
+          
       - name: Create environment variables file
         run: |
           cat > env.yaml << 'EOF'
@@ -75,6 +75,7 @@ jobs:
           REDIS_HOST: "${{ secrets.REDIS_HOST }}"
           REDIS_PORT: "${{ secrets.REDIS_PORT }}"
           REDIS_DB: "${{ secrets.REDIS_DB }}"
+          REDIS_PASSWORD: "${{ secrets.REDIS_PASSWORD }}"
           GOOGLE_CLIENT_ID: "${{ secrets.GOOGLE_CLIENT_ID }}"
           GOOGLE_CLIENT_SECRET: "${{ secrets.GOOGLE_CLIENT_SECRET }}"
           GOOGLE_REDIRECT_URI: "${{ secrets.GOOGLE_REDIRECT_URI }}"
@@ -100,6 +101,7 @@ jobs:
           ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES: "${{ secrets.ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES }}"
           ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES: "${{ secrets.ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES }}"
           ADMIN_EMAILS: "${{ secrets.ADMIN_EMAILS }}"
+          DB_SCHEMA: "${{ secrets.DB_SCHEMA }}"
           EOF
 
       - name: Deploy to Google Cloud Run

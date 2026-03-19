@@ -146,7 +146,7 @@ async def login_google_callback(
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,  # 개발 환경에서는 secure=False
+            secure=True,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
             samesite="lax",
             domain=SETTINGS.COOKIE_DOMAIN
@@ -155,7 +155,7 @@ async def login_google_callback(
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            secure=False,  # 개발 환경에서는 secure=False
+            secure=True,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
             samesite="lax",
             domain=SETTINGS.COOKIE_DOMAIN
@@ -163,8 +163,8 @@ async def login_google_callback(
         response.set_cookie(
             key="userType",
             value=user.user_gubun,
-            httponly=False,
-            secure=False,  # 개발 환경에서는 secure=False
+            httponly=True,
+            secure=True,  # 개발 환경에서는 secure=False
             max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
             samesite="lax",
             domain=SETTINGS.COOKIE_DOMAIN
@@ -329,7 +329,7 @@ async def refresh(request: Request,
             return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
 
         # return JSONResponse(content={"access_token": access_token, "token_type": token_type})
-        response = JSONResponse(content={"success": True}, status_code=200)
+        response = JSONResponse(content={"success": True, "user_type": user_type}, status_code=200)
         response.set_cookie(
             key="access_token",
             value=access_token,
@@ -509,5 +509,7 @@ async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
             domain=SETTINGS.COOKIE_DOMAIN
         )
         return response
+    except ValueError as e:
+        return JSONResponse(content={"error": str(e)}, status_code=401)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
