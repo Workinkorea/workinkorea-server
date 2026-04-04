@@ -10,7 +10,27 @@ env:
   IMAGE_NAME: workinkorea-server-pro
 
 jobs:
+  check-migration:
+    runs-on: ubuntu-latest
+    outputs:
+      migration_changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check alembic changes
+        id: check
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -q "alembic/versions/"; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
   deploy:
+    needs: check-migration
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -32,6 +52,20 @@ jobs:
           docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
 
+      - name: Run Alembic Migration
+        if: needs.check-migration.outputs.migration_changed == 'true'
+        run: |
+          gcloud run jobs delete alembic-migrate --region ${{ env.REGION }} --quiet || true
+          gcloud run jobs create alembic-migrate \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --vpc-connector workinkorea-vpc-con \
+            --vpc-egress all \
+            --set-env-vars "DATABASE_SYNC_URL=${{ secrets.DATABASE_SYNC_URL }},DATABASE_ASYNC_URL=${{ secrets.DATABASE_ASYNC_URL }}" \
+            --command uv \
+            --args "run,alembic,upgrade,head"
+          gcloud run jobs execute alembic-migrate --region ${{ env.REGION }} --wait
+
       - name: Create environment variables file
         run: |
           cat > env.yaml << 'EOF'
@@ -43,6 +77,8 @@ jobs:
           REDIS_HOST: "${{ secrets.REDIS_HOST }}"
           REDIS_PORT: "${{ secrets.REDIS_PORT }}"
           REDIS_DB: "${{ secrets.REDIS_DB }}"
+          REDIS_PASSWORD: "${{ secrets.REDIS_PASSWORD }}"
+          NODE_ENV: "production"
           GOOGLE_CLIENT_ID: "${{ secrets.GOOGLE_CLIENT_ID }}"
           GOOGLE_CLIENT_SECRET: "${{ secrets.GOOGLE_CLIENT_SECRET }}"
           GOOGLE_REDIRECT_URI: "${{ secrets.GOOGLE_REDIRECT_URI }}"
