@@ -86,7 +86,7 @@ class CompanyPostService:
         if company_post.company_id != company_id:
             raise ValueError("You are not authorized to delete this company post")
 
-        return await self.company_post_repository.delete_company_post(company_post)
+        return await self.company_post_repository.delete_company_post(company_post_id)
 
     async def get_list_company_posts(self, skip: int = 0, limit: int = 100) -> list[CompanyPostDTO] | None:
         """
