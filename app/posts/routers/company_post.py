@@ -87,8 +87,6 @@ async def get_company_post_by_company_post_id(
     try:
         company_post = await company_post_service.get_company_post_by_company_post_id(company_post_id)
         return CompanyPostResponse.model_validate(company_post)
-    except ValueError as e:
-        return JSONResponse(content={"error": str(e)}, status_code=404)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 

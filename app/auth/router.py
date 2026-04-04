@@ -329,7 +329,7 @@ async def refresh(request: Request,
             return JSONResponse(content={"message": "Failed to create access token"}, status_code=500)
 
         # return JSONResponse(content={"access_token": access_token, "token_type": token_type})
-        response = JSONResponse(content={"success": True, "user_type": user_type}, status_code=200)
+        response = JSONResponse(content={"success": True}, status_code=200)
         response.set_cookie(
             key="access_token",
             value=access_token,
@@ -509,7 +509,5 @@ async def company_login(form_data: OAuth2PasswordRequestForm = Depends(),
             domain=SETTINGS.COOKIE_DOMAIN
         )
         return response
-    except ValueError as e:
-        return JSONResponse(content={"error": str(e)}, status_code=401)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
