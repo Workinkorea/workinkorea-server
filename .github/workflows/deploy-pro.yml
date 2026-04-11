@@ -101,8 +101,8 @@ jobs:
           ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES: "${{ secrets.ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES }}"
           ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES: "${{ secrets.ADMIN_REFRESH_TOKEN_EXPIRE_MINUTES }}"
           ADMIN_EMAILS: "${{ secrets.ADMIN_EMAILS }}"
+          GMAIL_SERVICE_ACCOUNT_JSON_B64: "${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON_B64 }}"
           EOF
-          echo '          GMAIL_SERVICE_ACCOUNT_JSON_B64: "${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON_B64 }}"' >> env.yaml
 
       - name: Deploy to Google Cloud Run
         run: |
