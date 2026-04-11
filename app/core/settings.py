@@ -9,13 +9,10 @@ class Settings(BaseSettings):
     CLIENT_URL: Optional[str] = None
     ORIGINS_URLS: Optional[str] = None
 
-    # 이메일 설정
-    MAIL_USERNAME: Optional[str] = None
-    MAIL_PASSWORD: Optional[str] = None
-    MAIL_FROM_NAME: Optional[str] = None
-    MAIL_FROM: Optional[str] = None
-    MAIL_PORT: Optional[int] = None
-    MAIL_SERVER: Optional[str] = None
+    # 이메일 설정 (Gmail API)
+    GMAIL_FROM: Optional[str] = None
+    GMAIL_SERVICE_ACCOUNT_JSON_B64: Optional[str] = None
+    GMAIL_DELEGATED_USER: Optional[str] = None
 
     # 데이터베이스 설정
     DATABASE_SYNC_URL: Optional[str] = None

@@ -2,7 +2,6 @@
 import jwt
 import random
 import datetime
-from pathlib import Path
 from typing import Optional
 
 # app/core
@@ -27,8 +26,16 @@ from app.profile.repositories.account_config import AccountConfigRepository
 # sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# fastapi
-from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+
+import json
+import base64
+import asyncio
+from pathlib import Path
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+
 
 
 class AuthService:
@@ -40,35 +47,39 @@ class AuthService:
         self.account_config_repository = AccountConfigRepository(session)
 
     async def send_email_verify_code(self, email: str):
-        """ 
-        email certification code 
+        """
+        email certification code
         args:
             email: str
         """
-        conf = ConnectionConfig(
-            MAIL_USERNAME=SETTINGS.MAIL_USERNAME,
-            MAIL_PASSWORD=SETTINGS.MAIL_PASSWORD,
-            MAIL_FROM_NAME=SETTINGS.MAIL_FROM_NAME,
-            MAIL_FROM=SETTINGS.MAIL_FROM,
-            MAIL_PORT=SETTINGS.MAIL_PORT,
-            MAIL_SERVER=SETTINGS.MAIL_SERVER,
-            MAIL_STARTTLS=False,
-            MAIL_SSL_TLS=True,
-            USE_CREDENTIALS=True,
-            VALIDATE_CERTS=True,
-            TEMPLATE_FOLDER=(Path(__file__).resolve().parents[1] / 'templates')
-        )
-        # random int 6 digits
         code = random.randint(100000, 999999)
 
-        message = MessageSchema(
-            subject="Work In Korea Verification Code",
-            recipients=[email],
-            template_body={"code": code},
-            subtype=MessageType.html)
+        # 서비스 계정 인증
+        sa_json = base64.b64decode(SETTINGS.GMAIL_SERVICE_ACCOUNT_JSON_B64).decode("utf-8")
+        service_account_info = json.loads(sa_json)
+        creds = service_account.Credentials.from_service_account_info(
+            service_account_info,
+            scopes=["https://www.googleapis.com/auth/gmail.send"],
+            subject=SETTINGS.GMAIL_DELEGATED_USER
+        )
+        service = build("gmail", "v1", credentials=creds)
 
-        fm = FastMail(conf)
-        await fm.send_message(message, template_name="email_code_temp.html")
+        # HTML 템플릿 렌더링
+        template_path = Path(__file__).resolve().parents[1] / 'templates' / 'email_code_temp.html'
+        html_content = template_path.read_text().replace("{{ code }}", str(code))
+
+        # 이메일 생성
+        msg = MIMEMultipart()
+        msg["to"] = email
+        msg["from"] = SETTINGS.GMAIL_FROM
+        msg["subject"] = "Work In Korea Verification Code"
+        msg.attach(MIMEText(html_content, "html"))
+
+        raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+        await asyncio.to_thread(
+            service.users().messages().send(userId="me", body={"raw": raw}).execute
+        )
+
         return code
 
     async def create_access_token(self, user_email: str) -> str:
