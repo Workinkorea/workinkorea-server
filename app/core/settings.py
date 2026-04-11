@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     # 이메일 설정 (Gmail API)
     GMAIL_FROM: Optional[str] = None
-    GMAIL_SERVICE_ACCOUNT_JSON: Optional[str] = None
+    GMAIL_SERVICE_ACCOUNT_JSON_B64: Optional[str] = None
     GMAIL_DELEGATED_USER: Optional[str] = None
 
     # 데이터베이스 설정
