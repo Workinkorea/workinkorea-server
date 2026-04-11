@@ -100,7 +100,8 @@ jobs:
           ADMIN_EMAILS: "${{ secrets.ADMIN_EMAILS }}"
           DB_SCHEMA: "${{ secrets.DB_SCHEMA }}"
           EOF
-          echo "          GMAIL_SERVICE_ACCOUNT_JSON: '${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON }}'" >> env.yaml
+          GMAIL_B64=$(printf '%s' '${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON }}' | base64 -w 0)
+          echo "          GMAIL_SERVICE_ACCOUNT_JSON: \"${GMAIL_B64}\"" >> env.yaml
 
       - name: Deploy to Google Cloud Run
         run: |
