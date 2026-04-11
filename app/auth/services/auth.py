@@ -54,11 +54,9 @@ class AuthService:
         """
         code = random.randint(100000, 999999)
 
-        # 서비스 계정 인증 (JSON 또는 Base64 인코딩된 JSON 지원)
-        try:
-            service_account_info = json.loads(SETTINGS.GMAIL_SERVICE_ACCOUNT_JSON)
-        except json.JSONDecodeError:
-            service_account_info = json.loads(base64.b64decode(SETTINGS.GMAIL_SERVICE_ACCOUNT_JSON).decode())
+        # 서비스 계정 인증
+        sa_json = base64.b64decode(SETTINGS.GMAIL_SERVICE_ACCOUNT_JSON_B64).decode("utf-8")
+        service_account_info = json.loads(sa_json)
         creds = service_account.Credentials.from_service_account_info(
             service_account_info,
             scopes=["https://www.googleapis.com/auth/gmail.send"],
