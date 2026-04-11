@@ -91,7 +91,6 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: "${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}"
           REFRESH_TOKEN_EXPIRE_MINUTES: "${{ secrets.REFRESH_TOKEN_EXPIRE_MINUTES }}"
           GMAIL_FROM: "${{ secrets.GMAIL_FROM }}"
-          GMAIL_SERVICE_ACCOUNT_JSON: "${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON }}"
           GMAIL_DELEGATED_USER: "${{ secrets.GMAIL_DELEGATED_USER }}"
           MINIO_ENDPOINT: "${{ secrets.MINIO_ENDPOINT }}"
           MINIO_ACCESS_KEY: "${{ secrets.MINIO_ACCESS_KEY }}"
@@ -115,7 +114,8 @@ jobs:
             --ingress internal-and-cloud-load-balancing \
             --allow-unauthenticated \
             --port 8000 \
-            --env-vars-file env.yaml
+            --env-vars-file env.yaml \
+            --set-env-vars "GMAIL_SERVICE_ACCOUNT_JSON=${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON }}"
 
       - name: Send Discord Deployment Notification
         if: always()
