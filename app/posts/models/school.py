@@ -7,7 +7,7 @@ from sqlalchemy import Date, Boolean
 class Schools(Base):
     __tablename__ = "schools"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    resume_id: Mapped[int] = mapped_column(Integer, ForeignKey("resumes.id"), index=True)
+    resume_id: Mapped[int] = mapped_column(Integer, ForeignKey("resumes.id", ondelete="CASCADE"), index=True)
     school_name: Mapped[str] = mapped_column(String, index=True)
     major_name: Mapped[str] = mapped_column(String, index=True)
     start_date: Mapped[datetime] = mapped_column(Date, index=True)

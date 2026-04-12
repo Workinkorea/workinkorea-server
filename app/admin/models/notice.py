@@ -14,5 +14,5 @@ class Notice(Base):
     content: Mapped[str] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True) # 공지 활성화/비활성화 -> 가려놓기 기능
     
-    author_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True) # 작성한 담당자
+    author_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True) # 작성한 담당자
     author: Mapped["User"] = relationship("User")
