@@ -34,9 +34,9 @@ def upgrade() -> None:
     op.drop_constraint('licenses_resume_id_fkey', 'licenses', type_='foreignkey')
     op.create_foreign_key('licenses_resume_id_fkey', 'licenses', 'resumes', ['resume_id'], ['id'], ondelete='CASCADE')
 
-    # introductions.resume_id -> CASCADE
-    op.drop_constraint('introductions_resume_id_fkey', 'introductions', type_='foreignkey')
-    op.create_foreign_key('introductions_resume_id_fkey', 'introductions', 'resumes', ['resume_id'], ['id'], ondelete='CASCADE')
+    # introduction.resume_id -> CASCADE
+    op.drop_constraint('introduction_resume_id_fkey', 'introduction', type_='foreignkey')
+    op.create_foreign_key('introduction_resume_id_fkey', 'introduction', 'resumes', ['resume_id'], ['id'], ondelete='CASCADE')
 
     # language_skills.resume_id -> CASCADE
     op.drop_constraint('language_skills_resume_id_fkey', 'language_skills', type_='foreignkey')
@@ -61,8 +61,8 @@ def downgrade() -> None:
     op.drop_constraint('licenses_resume_id_fkey', 'licenses', type_='foreignkey')
     op.create_foreign_key('licenses_resume_id_fkey', 'licenses', 'resumes', ['resume_id'], ['id'])
 
-    op.drop_constraint('introductions_resume_id_fkey', 'introductions', type_='foreignkey')
-    op.create_foreign_key('introductions_resume_id_fkey', 'introductions', 'resumes', ['resume_id'], ['id'])
+    op.drop_constraint('introduction_resume_id_fkey', 'introduction', type_='foreignkey')
+    op.create_foreign_key('introduction_resume_id_fkey', 'introduction', 'resumes', ['resume_id'], ['id'])
 
     op.drop_constraint('language_skills_resume_id_fkey', 'language_skills', type_='foreignkey')
     op.create_foreign_key('language_skills_resume_id_fkey', 'language_skills', 'resumes', ['resume_id'], ['id'])
