@@ -117,8 +117,8 @@ async def login_google_callback(
         if not user:
             # user 조회 실패
             status_massage = urlencode({
-                "status": "error",
-                "message": "User not found"
+                "user_email": user_info_data['email'],
+                "status": "error"
             })
             url = f"{SETTINGS.CLIENT_URL}/signup?{status_massage}"
             return RedirectResponse(url=url)
