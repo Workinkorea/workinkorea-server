@@ -7,7 +7,7 @@ from datetime import datetime
 class Resume(Base):
     __tablename__ = "resumes"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True)
     title: Mapped[str] = mapped_column(String, index=True)
     profile_url: Mapped[str] = mapped_column(String, index=True, nullable=True)
     resume_url: Mapped[str] = mapped_column(String, index=True, nullable=True)
