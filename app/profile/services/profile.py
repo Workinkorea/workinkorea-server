@@ -19,7 +19,7 @@ class ProfileService:
             return None
         return ProfileDTO.model_validate(profile)
 
-    async def create_profile(self, user_data: dict) -> bool:
+    async def create_profile(self, user_data: dict) -> ProfileDTO | None:
         """
         create profile
         args:
@@ -27,8 +27,8 @@ class ProfileService:
         """
         created = await self.profile_repository.create_profile(user_data)
         if not created:
-            return False
-        return True
+            return None
+        return ProfileDTO.model_validate(created)
 
     async def update_profile(self, user_id: int, profile_data: dict) -> ProfileDTO | None:
         """

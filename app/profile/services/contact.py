@@ -19,6 +19,22 @@ class ContactService:
             return None
         return ContactDTO.model_validate(contact)
 
+    async def create_contact(self, user_id: int) -> ContactDTO | None:
+        """
+        create contact with empty values
+        args:
+            user_id: int
+        """
+        contact = await self.contact_repository.create_contact(user_id, {
+            'phone_number': None,
+            'github_url': None,
+            'linkedin_url': None,
+            'website_url': None,
+        })
+        if not contact:
+            return None
+        return ContactDTO.model_validate(contact)
+
     async def update_contact(self, user_id: int, contact_data: dict) -> ContactDTO | None:
         """
         update contact

@@ -19,6 +19,20 @@ class AccountConfigService:
             return None
         return AccountConfigDTO.model_validate(account_config)
 
+    async def create_account_config(self, user_id: int) -> AccountConfigDTO | None:
+        """
+        create account config with default values
+        args:
+            user_id: int
+        """
+        account_config = await self.account_config_repository.create_account_config(user_id, {
+            'sns_message_notice': True,
+            'email_notice': True,
+        })
+        if not account_config:
+            return None
+        return AccountConfigDTO.model_validate(account_config)
+
     async def update_account_config(self, user_id: int, account_config_data: dict) -> bool:
         """
         update account config to db
