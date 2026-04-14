@@ -7,7 +7,7 @@ from sqlalchemy import Date
 class Licenses(Base):
     __tablename__ = "licenses"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    resume_id: Mapped[int] = mapped_column(Integer, ForeignKey("resumes.id"), index=True)
+    resume_id: Mapped[int] = mapped_column(Integer, ForeignKey("resumes.id", ondelete="CASCADE"), index=True)
     license_name: Mapped[str] = mapped_column(String, index=True, nullable=True)
     license_agency: Mapped[str] = mapped_column(String, index=True, nullable=True)
     license_date: Mapped[datetime] = mapped_column(Date, index=True, nullable=True)

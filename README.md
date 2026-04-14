@@ -128,6 +128,12 @@ alembic/env.py 파일에 모델 추가
 from app.auth.models import *
 ```
 
+### Alembic 수동 마이그레이션 생성                                               
+  1. `uv run alembic revision -m "Creat your message"` — DB 접속 없이 빈          
+  마이그레이션 파일 생성                                                           
+  2. 생성된 파일(`alembic/versions/`)의 `upgrade()`/`downgrade()` 함수에 직접 SQL 작성                                                                             
+  3. 배포 시 `uv run alembic upgrade head`로 적용    
+
 ```bash
 # 마이그레이션 생성
 uv run alembic revision --autogenerate -m "Creat your message"

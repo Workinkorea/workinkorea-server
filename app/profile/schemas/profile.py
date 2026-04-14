@@ -70,3 +70,24 @@ class ProfileResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class CreateProfileRequest(BaseModel):
+    profile_image_url: Optional[str] = None
+    location: Optional[str] = None
+    introduction: Optional[str] = None
+
+    address: Optional[str] = None  # 상세 주소
+
+    position_id: Optional[int] = None
+    career: Optional[str] = None
+    job_status: Optional[str] = None
+    portfolio_url: Optional[str] = None
+    language_skills: Optional[list[LanguageSkillsDTO]] = None
+
+    birth_date: datetime.date
+    name: str
+    country_id: int
+
+    class Config:
+        from_attributes = True
