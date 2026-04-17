@@ -1,6 +1,7 @@
 # python
 import jwt
 import random
+import hashlib
 import datetime
 from typing import Optional
 
@@ -228,6 +229,25 @@ class AuthService:
             email: str
         """
         return await self.auth_repository.get_user_by_email(email)
+
+    def hash_password(self, password: str) -> str:
+        return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+    async def user_login(self, email: str, password: str) -> User | None:
+        """
+        login with email and password
+        args:
+            email: str
+            password: str
+        """
+        user = await self.auth_repository.get_user_by_email(email)
+        if not user:
+            return None
+        if not user.password:
+            return None
+        if user.password != self.hash_password(password):
+            return None
+        return user
 
     async def update_user_company_info(self, email: str, company_info: dict) -> User | None:
         """

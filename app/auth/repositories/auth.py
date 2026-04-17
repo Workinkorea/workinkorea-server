@@ -20,6 +20,25 @@ class AuthRepository:
         try:
             stmt = insert(User).values(
                 email=data['email'],
+                password=data.get('password'),
+                passport_certi=False
+            ).returning(User)
+            result = await self.session.execute(stmt)
+            await self.session.commit()
+            return result.scalar_one_or_none()
+        except Exception as e:
+            raise e
+
+    async def create_user_by_email(self, data: dict) -> User | None:
+        """
+        create user with email/password
+        args:
+            data: dict
+        """
+        try:
+            stmt = insert(User).values(
+                email=data['email'],
+                password=data['password'],
                 passport_certi=False
             ).returning(User)
             result = await self.session.execute(stmt)

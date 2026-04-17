@@ -1,10 +1,11 @@
 from app.database import Base
-from sqlalchemy import Integer, String, Boolean
+from sqlalchemy import Integer, String, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 class DiagnosisAnswer(Base):
     __tablename__ = "diagnosis_answers"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     total_score: Mapped[int] = mapped_column(Integer, index=True, nullable=True)
     q1_answer: Mapped[str] = mapped_column(String, index=True, nullable=True)
     q2_answer: Mapped[str] = mapped_column(String, index=True, nullable=True)

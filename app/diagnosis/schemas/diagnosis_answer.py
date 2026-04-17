@@ -3,6 +3,7 @@ from typing import Optional
 
 class DiagnosisAnswerDTO(BaseModel):
     total_score: int
+    user_id: Optional[int] = None
     q1_answer: Optional[str] = None
     q2_answer: Optional[str] = None
     q3_answer: Optional[str] = None
@@ -24,6 +25,7 @@ class DiagnosisAnswerDTO(BaseModel):
 
 class DiagnosisAnswerResponse(BaseModel):
     id: int
+    user_id: Optional[int] = None
     total_score: int
     q1_answer: Optional[str] = None
     q2_answer: Optional[str] = None

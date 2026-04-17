@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 from datetime import date
+from typing import Optional
 
 
 class SignupRequest(BaseModel):
@@ -9,6 +10,7 @@ class SignupRequest(BaseModel):
     name: str
     birth_date: date
     country_code: str
+    password: Optional[str] = None
 
 class EmailCertifyRequest(BaseModel):
     email: str
@@ -26,5 +28,9 @@ class CompanySignupRequest(BaseModel):
     phone: str
 
 class CompanyLoginRequest(BaseModel):
+    email: str
+    password: str
+
+class UserLoginRequest(BaseModel):
     email: str
     password: str

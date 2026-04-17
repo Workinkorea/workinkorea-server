@@ -193,13 +193,13 @@ async def signup(
             return JSONResponse(content={"error": "email is required"}, status_code=400)
         if not "@" in user_info_data['email']:
             return JSONResponse(content={"error": "email is invalid"}, status_code=400)
-        
+
 
         if not user_info_data['name']:
             return JSONResponse(content={"error": "name is required"}, status_code=400)
         if not bool(re.match(r'^[a-zA-Z\s]+$', user_info_data['name'])):
             return JSONResponse(content={"error": "name is invalid"}, status_code=400)
-        
+
         if not user_info_data['birth_date']:
             return JSONResponse(content={"error": "birth_date is required"}, status_code=400)
         if not user_info_data['country_code']:
@@ -210,7 +210,7 @@ async def signup(
         if user:
             # user 이미 존재하는 경우
             return JSONResponse(content={"error": "user already exists"}, status_code=400)
-        
+
         # country 조회
         country = await country_service.get_country_by_country_code(user_info_data['country_code'])
         if not country:
@@ -218,12 +218,71 @@ async def signup(
             return JSONResponse(content={"error": "country not found"}, status_code=400)
 
         user_info_data['country_id'] = country.id
+
+        # password가 있으면 해시 후 저장
+        if user_info_data.get('password'):
+            user_info_data['password'] = auth_service.hash_password(user_info_data['password'])
+
         user_dto, profile_dto, contact_dto, account_config_dto = await auth_service.create_user_by_social(user_info_data)
         if not user_dto or not profile_dto or not contact_dto or not account_config_dto:
             # user 생성 실패
             return JSONResponse(content={"error": "failed to create user"}, status_code=500)
-        
+
         return JSONResponse(content={"url": f"{SETTINGS.CLIENT_URL}/login"}, status_code=201)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@router.post("/login")
+async def user_login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    auth_service: AuthService = Depends(get_auth_service),
+    auth_redis_service: AuthRedisService = Depends(get_auth_redis_service)
+):
+    """
+    user login with email and password
+    """
+    try:
+        user = await auth_service.user_login(form_data.username, form_data.password)
+        if user is None:
+            return JSONResponse(content={"error": "Invalid email or password"}, status_code=401)
+
+        access_token = await auth_service.create_access_token(user.email)
+        refresh_token = await auth_service.create_refresh_token(user.email)
+
+        refresh_token_obj = await auth_redis_service.set_refresh_token(refresh_token, user.email)
+        if not refresh_token_obj:
+            return JSONResponse(content={"error": "Failed to create refresh token"}, status_code=500)
+
+        response = JSONResponse(content={"success": True}, status_code=200)
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=False,
+            max_age=SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES,
+            samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=False,
+            max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
+            samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
+        response.set_cookie(
+            key="userType",
+            value=user.user_gubun,
+            httponly=False,
+            secure=False,
+            max_age=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES,
+            samesite="lax",
+            domain=SETTINGS.COOKIE_DOMAIN
+        )
+        return response
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 

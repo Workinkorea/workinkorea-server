@@ -53,6 +53,9 @@ class CompanyPostService:
         if not company_post:
             raise ValueError("Company post not found")
 
+        if company_post.company_id != company_post_data['company_id']:
+            raise ValueError("You are not authorized to update this company post")
+
         if company_post.title == company_post_data['title'] and  \
             company_post.content == company_post_data['content'] and \
             company_post.work_experience == company_post_data['work_experience'] and \
