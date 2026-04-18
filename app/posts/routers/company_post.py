@@ -14,6 +14,7 @@ from app.profile.services.position import PositionService
 
 from app.posts.schemas.request import CompanyPostRequest, CompanyPostListRequest
 from app.posts.schemas.response import CompanyPostResponse
+from app.applications.services.application import ApplicationService
 
 router = APIRouter(
     prefix="/company",
@@ -31,6 +32,10 @@ def get_company_service(session: AsyncSession = Depends(get_async_session)):
 
 def get_position_service(session: AsyncSession = Depends(get_async_session)):
     return PositionService(session)
+
+
+def get_application_service(session: AsyncSession = Depends(get_async_session)):
+    return ApplicationService(session)
 
 @router.get("/list")
 async def get_list_company_posts(
@@ -137,6 +142,29 @@ async def update_company_post(
         company_post_data['id'] = company_post_id
         company_post = await company_post_service.update_company_post(company_post_data)
         return CompanyPostResponse.model_validate(company_post)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@router.get("/{company_post_id}/applicants")
+async def get_applicants_by_post(
+    company_post_id: int,
+    company: Company = Depends(get_current_company_user),
+    application_service: ApplicationService = Depends(get_application_service),
+):
+    """
+    B15: get applicants for a company post
+    """
+    try:
+        applicants = await application_service.get_applicants_by_post(company_post_id, company.id)
+        return JSONResponse(
+            content={"applicants": [a.model_dump(mode="json") for a in applicants]},
+            status_code=200
+        )
+    except PermissionError as e:
+        return JSONResponse(content={"error": str(e)}, status_code=403)
+    except ValueError as e:
+        return JSONResponse(content={"error": str(e)}, status_code=404)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 

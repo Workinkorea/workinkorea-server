@@ -30,6 +30,7 @@ from app.posts.models.license import *
 from app.admin.models.notice import *
 
 from app.diagnosis.models.diagnosis_answer import *
+from app.applications.models.application import *
 
 # alembic 설정
 config = context.config

@@ -10,6 +10,7 @@ from app.posts.router import router as posts_router
 from app.diagnosis.router import router as diagnosis_router
 from app.admin.router import router as admin_router
 from app.minio.routers import router as minio_router
+from app.applications.router import router as applications_router
 
 from app.core.settings import SETTINGS
 
@@ -49,3 +50,9 @@ app.include_router(posts_router)
 app.include_router(diagnosis_router)
 app.include_router(admin_router)
 app.include_router(minio_router)
+app.include_router(applications_router)
+
+
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok"}
